@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro — Прив'язка до межі</title>
+    <title>LandCalc Pro — Схема з маркуванням</title>
     <style>
         :root { --p: #2e7d32; --bg: #f0f2f5; --accent: #d32f2f; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
@@ -25,9 +25,10 @@
         .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 15px; }
         .val { font-weight: bold; color: var(--p); }
         
-        #canvas-wrap { margin-top: 15px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; }
+        #canvas-wrap { margin-top: 15px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; position: relative; }
         canvas { width: 100%; height: auto; display: block; }
         .btn-clear { width: 100%; padding: 10px; background: #fff1f1; border: 1px solid #ffcdd2; color: #c62828; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -66,7 +67,7 @@
         <div class="split-box">
             <label>✂️ Вписати прямокутник від сторони</label>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-                <input type="number" id="sm2_1" placeholder="Площа м²" oninput="sync(1,0)">
+                <input type="number" id="sm2_1" placeholder="м²" oninput="sync(1,0)">
                 <input type="number" id="ssot_1" placeholder="сотки" oninput="sync(1,1)">
             </div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:8px">
@@ -74,7 +75,7 @@
                     <option value="a">Від сторони A</option>
                     <option value="d">Від сторони D</option>
                 </select>
-                <input type="number" id="sw_1" placeholder="Ширина вздовж межі (м)" oninput="doCalc()">
+                <input type="number" id="sw_1" placeholder="Ширина межі (м)" oninput="doCalc()">
             </div>
         </div>
     </div>
@@ -142,10 +143,7 @@
             let l = parseFloat(document.getElementById('l0').value)||0, w = parseFloat(document.getElementById('w0').value)||0;
             sM2 = parseFloat(document.getElementById('sm2_0').value)||0;
             area = l * w;
-            if (area > 0 && sM2 > 0) {
-                sDist = sM2 / w;
-                showSplit(sM2, sDist);
-            }
+            if (area > 0 && sM2 > 0) { sDist = sM2 / w; showSplit(sM2, sDist); }
             drawRect(l, w, sDist);
         } else if (mode === 1) {
             let a=parseFloat(document.getElementById('sa').value)||0, b=parseFloat(document.getElementById('sb').value)||0,
@@ -153,10 +151,7 @@
             sM2 = parseFloat(document.getElementById('sm2_1').value)||0;
             let sw = parseFloat(document.getElementById('sw_1').value)||0;
             area = heron(a, b, dg) + heron(c, d, dg);
-            if (sM2 > 0 && sw > 0) {
-                sDist = sM2 / sw;
-                showSplit(sM2, sDist);
-            }
+            if (sM2 > 0 && sw > 0) { sDist = sM2 / sw; showSplit(sM2, sDist); }
             drawPoly(a, b, c, d, dg, sw, sDist);
         } else {
             let sk = parseFloat(document.getElementById('sk').value)||0, tm = parseFloat(document.getElementById('tm2').value)||0;
@@ -173,15 +168,23 @@
         document.getElementById('dist').innerText = d.toFixed(2);
     }
 
+    function drawLabel(txt, p1, p2, offset = 15) {
+        ctx.fillStyle = "#555"; ctx.font = "bold 12px Arial";
+        let mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+        let angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+        let lx = mx + Math.cos(angle + Math.PI/2) * offset;
+        let ly = my + Math.sin(angle + Math.PI/2) * offset;
+        ctx.fillText(txt, lx - 5, ly + 5);
+    }
+
     function drawRect(l, w, sd) {
         if (l <= 0 || w <= 0) return;
         let sc = Math.min(300/l, 200/w), dw = l*sc, dh = w*sc, x = 50, y = 50;
+        let pts = [{x:x,y:y}, {x:x+dw,y:y}, {x:x+dw,y:y+dh}, {x:x,y:y+dh}];
         ctx.fillStyle = "rgba(46, 125, 50, 0.1)"; ctx.fillRect(x, y, dw, dh);
-        if (sd > 0) {
-            ctx.fillStyle = "rgba(211, 47, 47, 0.2)";
-            ctx.fillRect(x, y, sd*sc, dh);
-        }
+        if (sd > 0) { ctx.fillStyle = "rgba(211, 47, 47, 0.2)"; ctx.fillRect(x, y, sd*sc, dh); }
         ctx.strokeStyle = "var(--p)"; ctx.strokeRect(x, y, dw, dh);
+        drawLabel("L", pts[0], pts[1], -10); drawLabel("W", pts[1], pts[2], 15);
     }
 
     function drawPoly(a, b, c, d, dg, sw, sl) {
@@ -194,19 +197,19 @@
         ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.closePath();
         ctx.fillStyle = "rgba(46, 125, 50, 0.1)"; ctx.fill(); ctx.strokeStyle = "var(--p)"; ctx.stroke();
 
+        drawLabel("A", p1, p3, -10); drawLabel("B", p3, p2, -10);
+        drawLabel("C", p2, p4, -10); drawLabel("D", p4, p1, -10);
+
         if (sw > 0 && sl > 0) {
             ctx.save();
             let base = document.getElementById('base_side').value;
-            let start = p1, end = (base === 'a' ? p3 : p4);
-            let angle = Math.atan2(end.y - start.y, end.x - start.x);
-            
-            ctx.translate(start.x, start.y);
-            ctx.rotate(angle);
+            let start = p1, end = (base === 'a' ? p3 : p4), angle = Math.atan2(end.y - start.y, end.x - start.x);
+            ctx.translate(start.x, start.y); ctx.rotate(angle);
             ctx.fillStyle = "rgba(211, 47, 47, 0.3)";
-            // Малюємо прямокутник: sw - ширина вздовж сторони, sl - глибина вглиб ділянки
             ctx.fillRect(0, 0, sw*sc, (base === 'a' ? 1 : -1) * sl*sc);
             ctx.restore();
         }
+        ctx.setLineDash([5, 5]); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = "#ccc"; ctx.stroke(); ctx.setLineDash([]);
     }
 </script>
 </body>
