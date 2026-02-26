@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc — Надійна версія</title>
+    <title>LandCalc Pro — Повний функціонал</title>
     <style>
         :root { --p: #2e7d32; --bg: #f0f2f5; --accent: #d32f2f; }
         body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
         .app { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
         
-        #js-status { text-align: center; font-size: 10px; font-weight: bold; color: red; margin-bottom: 10px; }
+        #js-status { text-align: center; font-size: 10px; font-weight: bold; color: green; margin-bottom: 10px; }
         h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; font-size: 20px; }
         
         .tabs { display: flex; gap: 4px; margin-bottom: 15px; background: #eee; padding: 4px; border-radius: 8px; }
@@ -24,11 +24,16 @@
         input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
         input:focus { border-color: var(--p); border-width: 2px; }
         
+        /* Кнопки напрямку */
+        .dir-group { display: flex; gap: 5px; margin-top: 5px; }
+        .dir-btn { flex: 1; padding: 6px; font-size: 10px; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; background: #fff; }
+        .dir-btn.active { background: var(--p); color: white; border-color: var(--p); }
+
         .split-box { background: #fffde7; padding: 10px; border-radius: 8px; border: 1px solid #fff9c4; margin-top: 5px; }
         .split-title { font-size: 11px; font-weight: bold; color: #f57f17; margin-bottom: 5px; display: block; }
 
         .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 15px; }
-        .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 16px; }
+        .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 15px; }
         .val { font-weight: bold; color: var(--p); }
         .split-val { color: var(--accent); font-weight: bold; }
 
@@ -42,7 +47,7 @@
 <body>
 
 <div class="app">
-    <div id="js-status">JS НЕ ЗАПУЩЕНО</div>
+    <div id="js-status">JS АКТИВНИЙ</div>
     <h2>LandCalc Pro</h2>
     
     <div class="tabs">
@@ -57,10 +62,14 @@
             <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput="doCalc()"></div>
         </div>
         <div class="split-box">
-            <span class="split-title">✂️ Поділ ділянки</span>
+            <span class="split-title">✂️ Поділ прямокутника</span>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-                <input type="number" id="sM2_0" placeholder="м²" oninput="syncSplit(0)">
-                <input type="number" id="sSot_0" placeholder="сотки" oninput="syncSplit(1)">
+                <input type="number" id="sM2_0" placeholder="м²" oninput="syncSplit(0, 0)">
+                <input type="number" id="sSot_0" placeholder="сотки" oninput="syncSplit(0, 1)">
+            </div>
+            <div class="dir-group">
+                <button id="dv" class="dir-btn active" onclick="setDir('v')">Впоперек</button>
+                <button id="dh" class="dir-btn" onclick="setDir('h')">Вздовж</button>
             </div>
         </div>
     </div>
@@ -73,25 +82,33 @@
             <div class="field"><label>Стор. D</label><input type="number" id="sd" oninput="doCalc()"></div>
         </div>
         <div class="field"><label>Діагональ (м)</label><input type="number" id="dg" oninput="doCalc()"></div>
+        <div class="split-box">
+            <span class="split-title">✂️ Поділ довільної за площею</span>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
+                <input type="number" id="sM2_1" placeholder="м²" oninput="syncSplit(1, 0)">
+                <input type="number" id="sSot_1" placeholder="сотки" oninput="syncSplit(1, 1)">
+            </div>
+        </div>
     </div>
 
     <div id="p2" class="page">
         <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" oninput="doCalc()"></div>
-        <div class="field"><label>Площа (м²)</label><input type="number" id="target_m2" oninput="syncFind(0)"></div>
-        <div class="field"><label>Площа (сотки)</label><input type="number" id="target_sot" oninput="syncFind(1)"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
+            <div class="field"><label>Площа (м²)</label><input type="number" id="tm2" oninput="syncFind(0)"></div>
+            <div class="field"><label>Площа (сотки)</label><input type="number" id="tsot" oninput="syncFind(1)"></div>
+        </div>
     </div>
 
     <div class="res-box">
         <div id="res-std">
-            <div class="res-row"><span>Площа:</span><span><span id="out-m2" class="val">0.00</span> м²</span></div>
-            <div class="res-row"><span>У сотках:</span><span><span id="out-sot" class="val">0.00</span> сот.</span></div>
-            <div class="res-row"><span>Периметр:</span><span><span id="out-per" class="val">0.00</span> м</span></div>
+            <div class="res-row"><span>Загальна площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
+            <div class="res-row"><span>У сотках:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
             <div id="split-info" class="hidden" style="margin-top:8px; border-top:1px solid #c8e6c9; padding-top:8px;">
-                <div class="res-row"><span style="color:var(--accent)">Відступ межі:</span><span><span id="out-dist" class="split-val">0.00</span> м</span></div>
+                <div class="res-row"><span style="color:var(--accent)">Відступ межі:</span><span><span id="dist" class="split-val">0.00</span> м</span></div>
             </div>
         </div>
         <div id="res-find" class="hidden">
-            <div class="res-row"><span>Шукана сторона:</span><span><span id="out-side" class="val">0.00</span> м</span></div>
+            <div class="res-row"><span>Шукана сторона:</span><span><span id="oside" class="val">0.00</span> м</span></div>
         </div>
     </div>
 
@@ -99,15 +116,12 @@
         <canvas id="mc" width="400" height="300"></canvas>
     </div>
 
-    <button class="btn-clear" onclick="clearInputs()">Очистити все</button>
+    <button class="btn-clear" onclick="clearAll()">Очистити все</button>
 </div>
 
 <script>
-    // Перевірка запуску
-    const status = document.getElementById('js-status');
-    status.innerText = 'JS АКТИВНИЙ'; status.style.color = 'green';
-
     let mode = 0;
+    let splitDir = 'v';
     const canv = document.getElementById('mc');
     const ctx = canv.getContext('2d');
 
@@ -123,65 +137,70 @@
         doCalc();
     }
 
-    function syncSplit(type) {
-        let m2 = document.getElementById('sM2_0'), sot = document.getElementById('sSot_0');
+    function setDir(d) {
+        splitDir = d;
+        document.getElementById('dv').className = 'dir-btn' + (d==='v' ? ' active' : '');
+        document.getElementById('dh').className = 'dir-btn' + (d==='h' ? ' active' : '');
+        doCalc();
+    }
+
+    function syncSplit(mIdx, type) {
+        let m2 = document.getElementById('sM2_'+mIdx), sot = document.getElementById('sSot_'+mIdx);
         if (type === 0) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
         else m2.value = (parseFloat(sot.value) * 100 || 0).toFixed(2);
         doCalc();
     }
 
     function syncFind(type) {
-        let m2 = document.getElementById('target_m2'), sot = document.getElementById('target_sot');
+        let m2 = document.getElementById('tm2'), sot = document.getElementById('tsot');
         if (type === 0) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
         else m2.value = (parseFloat(sot.value) * 100 || 0).toFixed(2);
         doCalc();
     }
 
-    function clearInputs() {
+    function clearAll() {
         document.querySelectorAll('input').forEach(i => i.value = '');
         doCalc();
     }
 
-    function getH(a, b, c) {
+    function heron(a, b, c) {
         if (a+b<=c || a+c<=b || b+c<=a) return 0;
         let p = (a+b+c)/2; return Math.sqrt(p*(p-a)*(p-b)*(p-c));
     }
 
     function doCalc() {
-        let area = 0, peri = 0, splitD = 0;
+        let area = 0, splitD = 0;
         ctx.clearRect(0, 0, canv.width, canv.height);
 
         if (mode === 0) {
             let l = parseFloat(document.getElementById('l0').value) || 0;
             let w = parseFloat(document.getElementById('w0').value) || 0;
             let sm2 = parseFloat(document.getElementById('sM2_0').value) || 0;
-            area = l * w; peri = (l + w) * 2;
-            if (w > 0 && sm2 > 0 && sm2 < area) {
-                splitD = sm2 / w;
+            area = l * w;
+            if (area > 0 && sm2 > 0 && sm2 < area) {
+                splitD = (splitDir === 'v') ? sm2 / w : sm2 / l;
+                document.getElementById('dist').innerText = splitD.toFixed(2);
                 document.getElementById('split-info').classList.remove('hidden');
-                document.getElementById('out-dist').innerText = splitD.toFixed(2);
             } else document.getElementById('split-info').classList.add('hidden');
             drawRect(l, w, splitD);
         } 
         else if (mode === 1) {
-            let a = parseFloat(document.getElementById('sa').value) || 0;
-            let b = parseFloat(document.getElementById('sb').value) || 0;
-            let c = parseFloat(document.getElementById('sc').value) || 0;
-            let d = parseFloat(document.getElementById('sd').value) || 0;
+            let a = parseFloat(document.getElementById('sa').value) || 0, b = parseFloat(document.getElementById('sb').value) || 0;
+            let c = parseFloat(document.getElementById('sc').value) || 0, d = parseFloat(document.getElementById('sd').value) || 0;
             let dg = parseFloat(document.getElementById('dg').value) || 0;
-            area = getH(a, b, dg) + getH(c, d, dg);
-            peri = a + b + c + d;
-            drawPoly(a, b, c, d, dg);
+            let sm2 = parseFloat(document.getElementById('sM2_1').value) || 0;
+            area = heron(a, b, dg) + heron(c, d, dg);
+            document.getElementById('split-info').classList.add('hidden'); 
+            drawPoly(a, b, c, d, dg, sm2, area);
         } 
         else if (mode === 2) {
-            let side = parseFloat(document.getElementById('sk').value) || 0;
-            let target = parseFloat(document.getElementById('target_m2').value) || 0;
-            document.getElementById('out-side').innerText = side > 0 ? (target / side).toFixed(2) : "0.00";
+            let sk = parseFloat(document.getElementById('sk').value) || 0;
+            let tm = parseFloat(document.getElementById('tm2').value) || 0;
+            document.getElementById('oside').innerText = sk > 0 ? (tm / sk).toFixed(2) : "0.00";
         }
 
-        document.getElementById('out-m2').innerText = area.toFixed(2);
-        document.getElementById('out-sot').innerText = (area / 100).toFixed(2);
-        document.getElementById('out-per').innerText = peri.toFixed(2);
+        document.getElementById('om2').innerText = area.toFixed(2);
+        document.getElementById('osot').innerText = (area / 100).toFixed(2);
     }
 
     function drawRect(l, w, sd) {
@@ -193,26 +212,39 @@
         
         if (sd > 0) {
             ctx.fillStyle = "rgba(211, 47, 47, 0.2)";
-            ctx.fillRect(x, y, sd*sc, dh);
+            if (splitDir === 'v') ctx.fillRect(x, y, sd*sc, dh);
+            else ctx.fillRect(x, y, dw, sd*sc);
+            
             ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.strokeStyle = "var(--accent)";
-            ctx.moveTo(x + sd*sc, y); ctx.lineTo(x + sd*sc, y + dh); ctx.stroke(); ctx.setLineDash([]);
+            if (splitDir === 'v') { ctx.moveTo(x+sd*sc, y); ctx.lineTo(x+sd*sc, y+dh); }
+            else { ctx.moveTo(x, y+sd*sc); ctx.lineTo(x+dw, y+sd*sc); }
+            ctx.stroke(); ctx.setLineDash([]);
         }
-        
         ctx.strokeStyle = "var(--p)"; ctx.lineWidth = 2; ctx.strokeRect(x, y, dw, dh);
     }
 
-    function drawPoly(a, b, c, d, dg) {
+    function drawPoly(a, b, c, d, dg, sm2, total) {
         if (a<=0 || b<=0 || dg<=0) return;
-        let cA = (a*a + dg*dg - b*b) / (2*a*dg), cD = (d*d + dg*dg - c*c) / (2*d*dg);
+        let cA=(a*a+dg*dg-b*b)/(2*a*dg), cD=(d*d+dg*dg-c*c)/(2*d*dg);
         if (Math.abs(cA)>1 || Math.abs(cD)>1) return;
-        let sA = Math.sqrt(1-cA*cA), sD = Math.sqrt(1-cD*cD);
-        let sc = Math.min(300/dg, 150/Math.max(a*sA, d*sD));
+        let sA=Math.sqrt(1-cA*cA), sD=Math.sqrt(1-cD*cD);
+        let sc=Math.min(300/dg, 150/Math.max(a*sA, d*sD));
         let p1={x:50,y:150}, p2={x:50+dg*sc,y:150}, p3={x:50+a*cA*sc,y:150-a*sA*sc}, p4={x:50+d*cD*sc,y:150+d*sD*sc};
 
         ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.closePath();
         ctx.fillStyle = "rgba(46, 125, 50, 0.1)"; ctx.fill(); ctx.strokeStyle = "var(--p)"; ctx.stroke();
         
-        ctx.setLineDash([5, 5]); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = "#aaa"; ctx.stroke(); ctx.setLineDash([]);
+        if (sm2 > 0 && sm2 < total) {
+            let cutX = 50 + (dg * (sm2/total) * sc);
+            ctx.save();
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.closePath();
+            ctx.clip();
+            ctx.fillStyle = "rgba(211, 47, 47, 0.2)"; ctx.fillRect(0,0,cutX,300);
+            ctx.restore();
+            ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.strokeStyle = "var(--accent)";
+            ctx.moveTo(cutX, 0); ctx.lineTo(cutX, 300); ctx.stroke(); ctx.setLineDash([]);
+        }
+        ctx.setLineDash([5, 5]); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = "#ccc"; ctx.stroke(); ctx.setLineDash([]);
     }
 </script>
 </body>
