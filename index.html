@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro — Master Edition</title>
+    <title>LandCalc Pro Master</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --p: #2e7d32; --bg: #f0f2f5; --accent: #d32f2f; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
         .app { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
-        h2 { color: var(--p); text-align: center; margin: 0 0 10px 0; font-size: 22px; font-weight: 800; }
+        h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; font-size: 22px; font-weight: 800; }
         
         .tabs { display: flex; gap: 4px; margin-bottom: 15px; background: #eee; padding: 4px; border-radius: 8px; }
         .tab { flex: 1; padding: 10px 2px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 11px; font-weight: bold; background: none; border: none; color: #666; }
@@ -23,7 +23,7 @@
         .split-box { background: #fffde7; padding: 12px; border-radius: 10px; border: 1px solid #fff9c4; margin-top: 10px; }
         .part-row { background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 8px; position: relative; }
         .btn-add { width: 100%; padding: 12px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 5px; }
-        .btn-del { position: absolute; top: -5px; right: -5px; background: #ffcdd2; color: #c62828; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; }
+        .btn-del { position: absolute; top: -5px; right: -5px; background: #ffcdd2; color: #c62828; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
 
         .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 15px; }
         .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 14px; }
@@ -45,7 +45,7 @@
 </head>
 <body>
 <div class="app">
-    <h2>LandCalc Pro Master</h2>
+    <h2 onclick="location.reload()">LandCalc Pro</h2>
     
     <div class="tabs">
         <button id="t0" class="tab active" onclick="setTab(0)">Прямокутник</button>
@@ -56,11 +56,11 @@
 
     <div id="p0" class="page active">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-            <div class="field"><label>Довжина L (м)</label><input type="number" id="l0" oninput="doCalc()"></div>
-            <div class="field"><label>Ширина W (м)</label><input type="number" id="w0" oninput="doCalc()"></div>
+            <div class="field"><label>Довжина (м)</label><input type="number" id="l0" oninput="doCalc()"></div>
+            <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput="doCalc()"></div>
         </div>
         <div class="split-box">
-            <label>✂️ Пошаровий поділ</label>
+            <label>✂️ Поділ на частини</label>
             <div id="list0"></div>
             <button class="btn-add" onclick="addPart(0)">+ Додати частину</button>
         </div>
@@ -75,7 +75,7 @@
         </div>
         <div class="field" style="margin-top:8px"><label>Діагональ (м)</label><input type="number" id="dg" oninput="doCalc()"></div>
         <div class="split-box">
-            <label>✂️ Поділ паралельно фасаду (A)</label>
+            <label>✂️ Поділ паралельно фасаду</label>
             <div id="list1"></div>
             <button class="btn-add" onclick="addPart(1)">+ Додати частину</button>
         </div>
@@ -101,4 +101,114 @@
     <div class="res-box">
         <div id="res-normal">
             <div class="res-row"><span>Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
-            <div class="res-row"><span>Сотки:</span><span><span id="osot" class="val">0.00</span> сот.
+            <div class="res-row"><span>Сотки:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
+            <div id="multi-res" style="margin-top:8px; border-top:1px dashed #ccc; padding-top:8px"></div>
+        </div>
+        <div id="res-find" style="display:none">
+            <div class="res-row"><span>Шукана сторона:</span><span><span id="oside" class="val">0.00</span> м</span></div>
+        </div>
+    </div>
+
+    <div id="canvas-wrap"><canvas id="mc" width="400" height="300"></canvas></div>
+
+    <div class="btn-group">
+        <button class="btn-action" style="background:#2196f3" onclick="window.print()">📄 PDF Звіт</button>
+        <button class="btn-action" style="background:#666" onclick="resetApp()">🔄 Очистити</button>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    let mode = 0, map, geoLayer, parts = { 0: [], 1: [] };
+    const canv = document.getElementById('mc'), ctx = canv.getContext('2d');
+    const colors = ["rgba(211, 47, 47, 0.4)", "rgba(25, 118, 210, 0.4)", "rgba(255, 193, 7, 0.4)", "rgba(156, 39, 176, 0.4)"];
+
+    function setTab(idx) {
+        mode = idx;
+        document.querySelectorAll('.tab').forEach((t, i) => t.className = (i === idx) ? 'tab active' : 'tab');
+        document.querySelectorAll('.page').forEach((p, i) => p.className = (i === idx) ? 'page active' : 'page');
+        document.getElementById('res-normal').style.display = idx === 3 ? 'none' : 'block';
+        document.getElementById('res-find').style.display = idx === 3 ? 'block' : 'none';
+        document.getElementById('canvas-wrap').style.display = (idx === 2 || idx === 3) ? 'none' : 'block';
+        if (idx === 2) { 
+            if(!map) initMap();
+            setTimeout(() => { map.invalidateSize(); updateGeo(); }, 200);
+        }
+        doCalc();
+    }
+
+    function initMap() {
+        map = L.map('map').setView([49.444, 24.941], 17);
+        L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { subdomains:['mt0','mt1','mt2','mt3'] }).addTo(map);
+        map.on('click', e => { window.baseLat = e.latlng.lat; window.baseLon = e.latlng.lng; updateGeo(); });
+    }
+
+    function locateMe() {
+        navigator.geolocation.getCurrentPosition(p => {
+            window.baseLat = p.coords.latitude; window.baseLon = p.coords.longitude;
+            map.setView([window.baseLat, window.baseLon], 19);
+            updateGeo();
+        });
+    }
+
+    function addPart(m) {
+        parts[m].push({ m2: 0 });
+        renderParts(m);
+    }
+
+    function renderParts(m) {
+        const div = document.getElementById('list' + m);
+        div.innerHTML = '';
+        parts[m].forEach((p, i) => {
+            const row = document.createElement('div');
+            row.className = 'part-row';
+            row.innerHTML = `<button class="btn-del" onclick="parts[${m}].splice(${i},1); renderParts(${m}); doCalc();">×</button>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
+                    <div><label>м²</label><input type="number" value="${p.m2||''}" oninput="parts[${m}][${i}].m2=parseFloat(this.value)||0; doCalc()"></div>
+                    <div><label>сотки</label><input type="number" value="${p.m2?(p.m2/100).toFixed(2):''}" oninput="parts[${m}][${i}].m2=parseFloat(this.value)*100||0; doCalc()"></div>
+                </div>`;
+            div.appendChild(row);
+        });
+    }
+
+    function syncF(t) {
+        let m2 = document.getElementById('fm2'), sot = document.getElementById('fsot');
+        if (t === 0) sot.value = (m2.value / 100).toFixed(2);
+        else m2.value = (sot.value * 100).toFixed(2);
+        doCalc();
+    }
+
+    function resetApp() {
+        document.querySelectorAll('input').forEach(i => i.value = '');
+        parts = { 0: [], 1: [] };
+        renderParts(0); renderParts(1);
+        doCalc();
+    }
+
+    function heron(a, b, c) {
+        let p = (a + b + c) / 2;
+        let val = p * (p - a) * (p - b) * (p - c);
+        return val > 0 ? Math.sqrt(val) : 0;
+    }
+
+    function doCalc() {
+        let area = 0; ctx.clearRect(0, 0, 400, 300);
+        document.getElementById('multi-res').innerHTML = '';
+        if (mode === 0) {
+            let l = parseFloat(document.getElementById('l0').value)||0, w = parseFloat(document.getElementById('w0').value)||0;
+            area = l * w; if (l>0 && w>0) drawRect(l, w);
+        } else if (mode === 1) {
+            let a=parseFloat(document.getElementById('sa').value)||0, b=parseFloat(document.getElementById('sb').value)||0,
+                c=parseFloat(document.getElementById('sc').value)||0, d=parseFloat(document.getElementById('sd').value)||0, dg=parseFloat(document.getElementById('dg').value)||0;
+            area = heron(a, b, dg) + heron(c, d, dg);
+            if (a>0 && dg>0) drawPoly(a, b, c, d, dg);
+        } else if (mode === 3) {
+            let sk = parseFloat(document.getElementById('sk').value)||0, tm = parseFloat(document.getElementById('fm2').value)||0;
+            document.getElementById('oside').innerText = sk > 0 ? (tm / sk).toFixed(2) : "0.00";
+        }
+        document.getElementById('om2').innerText = area.toFixed(2);
+        document.getElementById('osot').innerText = (area / 100).toFixed(2);
+        if (mode === 2) updateGeo();
+    }
+
+    function drawRect(l
