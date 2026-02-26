@@ -3,48 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc — Земельний Помічник</title>
+    <title>LandCalc Pro</title>
     <style>
-        :root { --primary: #2e7d32; --bg: #f0f2f5; --card: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
-        .container { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 500px; width: 100%; }
-        h2 { color: var(--primary); text-align: center; margin-bottom: 15px; }
+        :root { --p: #2e7d32; --bg: #f5f5f5; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
+        .app { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
+        h2 { color: var(--p); text-align: center; margin-bottom: 20px; }
         
-        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #ddd; gap: 5px; }
-        .tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; border-bottom: 3px solid transparent; transition: 0.3s; font-size: 0.85em; color: #666; font-weight: bold; }
-        .tab.active { border-color: var(--primary); color: var(--primary); background: #f1f8e9; }
+        /* Вкладки */
+        .tabs { display: flex; background: #eee; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; font-weight: bold; color: #666; transition: 0.2s; }
+        .tab.active { background: white; color: var(--p); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        .mode-section { display: block; }
-        .hidden { display: none !important; }
+        /* Секції */
+        .page { display: none; }
+        .page.active { display: block; }
         
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .input-group { margin-bottom: 12px; }
-        label { display: block; font-size: 0.85em; margin-bottom: 4px; color: #555; font-weight: 600; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus { border-color: var(--primary); box-shadow: 0 0 5px rgba(46, 125, 50, 0.3); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px; }
+        .box { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #444; }
+        input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input:focus { border-color: var(--p); }
         
-        .result-box { background: #e8f5e9; padding: 15px; border-radius: 8px; border-left: 5px solid var(--primary); margin-top: 20px; }
-        .result-row { display: flex; justify-content: space-between; font-size: 1.1em; margin: 6px 0; }
-        .val { font-weight: bold; color: var(--primary); }
-        .info-text { font-size: 0.85em; color: #666; margin-bottom: 15px; line-height: 1.4; background: #fffde7; padding: 8px; border-radius: 5px; border: 1px solid #ffe082; }
+        /* Результат */
+        .res-card { background: #e8f5e9; padding: 15px; border-radius: 10px; border: 1px solid #c8e6c9; }
+        .res-line { display: flex; justify-content: space-between; font-size: 18px; margin: 5px 0; }
+        .val { font-weight: bold; color: var(--p); }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="app">
     <h2>LandCalc</h2>
     
     <div class="tabs">
-        <div id="t-rect" class="tab active" onclick="setMode('rect')">Прямокутник</div>
-        <div id="t-poly" class="tab" onclick="setMode('poly')">Довільна</div>
-        <div id="t-find" class="tab" onclick="setMode('find')">Пошук сторони</div>
+        <div class="tab active" onclick="tab(0)">Прямокутник</div>
+        <div class="tab" onclick="tab(1)">Довільна</div>
+        <div class="tab" onclick="tab(2)">Пошук</div>
     </div>
 
-    <div id="m-rect" class="mode-section">
-        <div class="input-grid">
-            <div class="input-group"><label>Довжина (м)</label><input type="number" id="L" oninput="calculateAll()"></div>
-            <div class="input-group"><label>Ширина (м)</label><input type="number" id="W" oninput="calculateAll()"></div>
+    <div id="p0" class="page active">
+        <div class="grid">
+            <div class="box"><label>Довжина (м)</label><input type="number" id="l1" oninput="calc()"></div>
+            <div class="box"><label>Ширина (м)</label><input type="number" id="w1" oninput="calc()"></div>
         </div>
     </div>
 
-    <div id
+    <div id="p1" class="page">
+        <div class="grid">
+            <div class="box"><label>Стор. A (м)</label><input type="number" id="sa" oninput="calc()"></div>
+            <div class="box"><label>Стор. B (м)</label><input type="number" id="sb" oninput="calc()"></div>
+            <div class="box"><label>Стор. C (м)</label><input type="number" id="sc" oninput="calc()"></div>
+            <div class="box"><label>Стор. D (м)</label><input type="number" id="sd" oninput="calc()"></div>
+        </div>
+        <div class="box"><label>Діагональ (м)</label><input type="number" id="dg" oninput="calc()"></div>
+    </div>
+
+    <div id="p2" class="page">
+        <div class="box"><label>Відома сторона (м)</label><input type="number" id="sk" oninput="calc()"></div>
+        <div class="grid">
+            <div class="box"><label>Площа (м²)</label><input type="number" id="am2" oninput="sync(0)"></div>
+            <div class="box"><label>Площа (сотки)</label><input type="number" id="asot" oninput="sync(1)"></div>
+        </div>
+    </div>
+
+    <div class="res-card">
+        <div id="res-main">
+            <div class="res-line"><span>Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
+            <div class="res-line"><span>У сотках:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
+        </div>
+        <div id="res-side" class="hidden">
+            <div class="res-line"><span>Потрібна довжина:</span><span><span id="
