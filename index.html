@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc — Final Debug</title>
+    <title>LandCalc Pro + Периметр</title>
     <style>
-        :root { --p: #2e7d32; --bg: #f4f4f4; }
+        :root { --p: #2e7d32; --bg: #f4f4f4; --red: #c62828; }
         body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
         .app { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 100%; max-width: 420px; }
-        h2 { color: var(--p); text-align: center; margin: 0 0 10px 0; }
-        
-        /* Статус перевірки JS */
-        #js-check { text-align: center; font-size: 10px; color: red; margin-bottom: 10px; font-weight: bold; }
+        h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; }
         
         .tabs { display: flex; background: #eee; border-radius: 8px; padding: 3px; margin-bottom: 20px; }
         .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: bold; color: #666; transition: 0.2s; }
@@ -20,13 +17,19 @@
         .page { display: none; }
         .page.active { display: block; }
         
-        .field { margin-bottom: 15px; }
-        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
+        .field { margin-bottom: 12px; }
+        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.2s; }
         input:focus { border: 2px solid var(--p); }
         
+        /* Кнопки */
+        .btn-clear { width: 100%; padding: 10px; background: none; border: 1px solid var(--red); color: var(--red); border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.2s; }
+        .btn-clear:hover { background: #ffebee; }
+
+        /* Результати */
         .res-box { background: #e8f5e9; padding: 15px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 20px; }
-        .res-line { display: flex; justify-content: space-between; font-size: 18px; margin: 5px 0; }
+        .res-line { display: flex; justify-content: space-between; font-size: 17px; margin: 6px 0; border-bottom: 1px dashed #c8e6c9; padding-bottom: 4px; }
+        .res-line:last-child { border: none; }
         .val { font-weight: bold; color: var(--p); }
         .hidden { display: none; }
     </style>
@@ -34,7 +37,6 @@
 <body>
 
 <div class="app">
-    <div id="js-check">JS НЕ ЗАПУЩЕНО</div>
     <h2>LandCalc Pro</h2>
     
     <div class="tabs">
@@ -44,30 +46,33 @@
     </div>
 
     <div id="p0" class="page active">
-        <div class="field"><label>Довжина (м)</label><input type="number" id="l0" oninput="calculate()"></div>
-        <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput="calculate()"></div>
+        <div class="field"><label>Довжина (м)</label><input type="number" id="l0" class="in" oninput="calc()"></div>
+        <div class="field"><label>Ширина (м)</label><input type="number" id="w0" class="in" oninput="calc()"></div>
     </div>
 
     <div id="p1" class="page">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div class="field"><label>Стор. A</label><input type="number" id="sa" oninput="calculate()"></div>
-            <div class="field"><label>Стор. B</label><input type="number" id="sb" oninput="calculate()"></div>
-            <div class="field"><label>Стор. C</label><input type="number" id="sc" oninput="calculate()"></div>
-            <div class="field"><label>Стор. D</label><input type="number" id="sd" oninput="calculate()"></div>
+            <div class="field"><label>Стор. A</label><input type="number" id="sa" class="in" oninput="calc()"></div>
+            <div class="field"><label>Стор. B</label><input type="number" id="sb" class="in" oninput="calc()"></div>
+            <div class="field"><label>Стор. C</label><input type="number" id="sc" class="in" oninput="calc()"></div>
+            <div class="field"><label>Стор. D</label><input type="number" id="sd" class="in" oninput="calc()"></div>
         </div>
-        <div class="field"><label>Діагональ (м)</label><input type="number" id="dg" oninput="calculate()"></div>
+        <div class="field"><label>Діагональ (м)</label><input type="number" id="dg" class="in" oninput="calc()"></div>
     </div>
 
     <div id="p2" class="page">
-        <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" oninput="calculate()"></div>
-        <div class="field"><label>Площа (м²)</label><input type="number" id="am2" oninput="sync(0)"></div>
-        <div class="field"><label>Площа (сотки)</label><input type="number" id="asot" oninput="sync(1)"></div>
+        <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" class="in" oninput="calc()"></div>
+        <div class="field"><label>Бажана площа (м²)</label><input type="number" id="am2" class="in" oninput="sync(0)"></div>
+        <div class="field"><label>Бажана площа (сотки)</label><input type="number" id="asot" class="in" oninput="sync(1)"></div>
     </div>
+
+    <button class="btn-clear" onclick="clearAll()">Очистити все</button>
 
     <div class="res-box">
         <div id="res-std">
             <div class="res-line"><span>Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
             <div class="res-line"><span>У сотках:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
+            <div class="res-line"><span>Периметр:</span><span><span id="oper" class="val">0.00</span> м</span></div>
         </div>
         <div id="res-side" class="hidden">
             <div class="res-line"><span>Шукана довжина:</span><span><span id="oside" class="val">0.00</span> м</span></div>
@@ -76,31 +81,29 @@
 </div>
 
 <script>
-    // Показуємо, що JS працює
-    document.getElementById('js-check').innerText = 'JS АКТИВНИЙ';
-    document.getElementById('js-check').style.color = 'green';
-
-    let currentMode = 0;
+    let mode = 0;
 
     function setTab(idx) {
-        currentMode = idx;
-        // Оновлення кнопок і сторінок
+        mode = idx;
         for (let i = 0; i < 3; i++) {
             document.getElementById('t' + i).className = (i === idx) ? 'tab active' : 'tab';
             document.getElementById('p' + i).className = (i === idx) ? 'page active' : 'page';
         }
-        // Результати
         document.getElementById('res-std').className = (idx === 2) ? 'hidden' : '';
         document.getElementById('res-side').className = (idx === 2) ? '' : 'hidden';
-        calculate();
+        calc();
     }
 
     function sync(type) {
-        let m2 = document.getElementById('am2');
-        let sot = document.getElementById('asot');
+        let m2 = document.getElementById('am2'), sot = document.getElementById('asot');
         if (type === 0) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
         else m2.value = (parseFloat(sot.value) * 100 || 0).toFixed(2);
-        calculate();
+        calc();
+    }
+
+    function clearAll() {
+        document.querySelectorAll('.in').forEach(input => input.value = '');
+        calc();
     }
 
     function heron(a, b, c) {
@@ -109,27 +112,37 @@
         return Math.sqrt(p * (p - a) * (p - b) * (p - c));
     }
 
-    function calculate() {
-        if (currentMode === 0) {
-            let res = (parseFloat(document.getElementById('l0').value) || 0) * (parseFloat(document.getElementById('w0').value) || 0);
-            updateUI(res);
-        } else if (currentMode === 1) {
+    function calc() {
+        let area = 0, perim = 0;
+
+        if (mode === 0) {
+            let l = parseFloat(document.getElementById('l0').value) || 0;
+            let w = parseFloat(document.getElementById('w0').value) || 0;
+            area = l * w;
+            perim = (l + w) * 2;
+        } 
+        else if (mode === 1) {
             let a = parseFloat(document.getElementById('sa').value) || 0;
             let b = parseFloat(document.getElementById('sb').value) || 0;
             let c = parseFloat(document.getElementById('sc').value) || 0;
             let d = parseFloat(document.getElementById('sd').value) || 0;
             let dg = parseFloat(document.getElementById('dg').value) || 0;
-            updateUI(heron(a, b, dg) + heron(c, d, dg));
-        } else if (currentMode === 2) {
+            area = heron(a, b, dg) + heron(c, d, dg);
+            perim = a + b + c + d;
+        } 
+        else if (mode === 2) {
             let side = parseFloat(document.getElementById('sk').value) || 0;
-            let area = parseFloat(document.getElementById('am2').value) || 0;
-            document.getElementById('oside').innerText = side > 0 ? (area / side).toFixed(2) : "0.00";
+            let targetArea = parseFloat(document.getElementById('am2').value) || 0;
+            document.getElementById('oside').innerText = side > 0 ? (targetArea / side).toFixed(2) : "0.00";
         }
+        
+        updateUI(area, perim);
     }
 
-    function updateUI(val) {
-        document.getElementById('om2').innerText = val.toFixed(2);
-        document.getElementById('osot').innerText = (val / 100).toFixed(2);
+    function updateUI(a, p) {
+        document.getElementById('om2').innerText = a.toFixed(2);
+        document.getElementById('osot').innerText = (a / 100).toFixed(2);
+        document.getElementById('oper').innerText = p.toFixed(2);
     }
 </script>
 </body>
