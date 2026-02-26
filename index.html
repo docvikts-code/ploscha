@@ -3,185 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <title>LandCalc Pro Ultimate</title>
     <style>
         :root { --p: #2e7d32; --bg: #f0f2f5; --accent: #d32f2f; }
         body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
         .app { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 460px; }
-        h2 { color: var(--p); text-align: center; margin: 0 0 10px 0; font-size: 20px; }
+        h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; font-size: 20px; }
+        
         .tabs { display: flex; gap: 4px; margin-bottom: 10px; background: #eee; padding: 4px; border-radius: 8px; }
-        .tab { flex: 1; padding: 8px 2px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 11px; font-weight: bold; background: none; border: none; color: #666; }
+        .tab { flex: 1; padding: 10px 2px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 11px; font-weight: bold; background: none; border: none; color: #666; }
         .tab.active { background: white; color: var(--p); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
         .page { display: none; } .page.active { display: block; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; margin-bottom: 8px; outline: none; }
-        .split-box { background: #fffde7; padding: 10px; border-radius: 10px; border: 1px solid #fff9c4; margin-top: 5px; }
-        .part-row { background: white; padding: 8px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 8px; position: relative; }
-        .btn-add { width: 100%; padding: 10px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 5px; }
-        .btn-del { position: absolute; top: -5px; right: -5px; background: #ffcdd2; color: #c62828; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; }
-        .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 10px; }
-        .res-row { display: flex; justify-content: space-between; margin: 3px 0; font-size: 14px; }
-        #canvas-wrap { margin-top: 10px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; }
+        .field { margin-bottom: 8px; }
+        label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #555; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
+        
+        .split-box { background: #fffde7; padding: 12px; border-radius: 10px; border: 1px solid #fff9c4; margin-top: 10px; }
+        .part-row { background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 8px; position: relative; }
+        .btn-add { width: 100%; padding: 12px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .btn-del { position: absolute; top: -5px; right: -5px; background: #ffcdd2; color: #c62828; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; }
+
+        .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 15px; }
+        .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 14px; }
+        .val { font-weight: bold; color: var(--p); }
+        
+        #canvas-wrap { margin-top: 15px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; }
         canvas { width: 100%; height: auto; display: block; }
-        #map { height: 300px; width: 100%; border-radius: 10px; margin-top: 10px; display: none; }
+        .btn-reset { width: 100%; padding: 10px; background: #eee; border: 1px solid #ccc; color: #666; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+
+        @media print { .tabs, .btn-add, .btn-reset, .split-box, .btn-del { display: none !important; } }
     </style>
 </head>
 <body>
 <div class="app">
-    <h2>LandCalc Pro</h2>
+    <h2 id="title">LandCalc Pro</h2>
+    
     <div class="tabs">
-        <button class="tab active" onclick="setMode(0)">Прямокутник</button>
-        <button class="tab" onclick="setMode(1)">Довільна</button>
-        <button class="tab" onclick="setMode(2)">Карта</button>
-        <button class="tab" onclick="setMode(3)">Пошук</button>
+        <button id="t0" class="tab active" onclick="setTab(0)">Прямокутник</button>
+        <button id="t1" class="tab" onclick="setTab(1)">Довільна</button>
+        <button id="t2" class="tab" onclick="setTab(2)">Пошук</button>
     </div>
 
     <div id="p0" class="page active">
-        <input type="number" id="l0" placeholder="Довжина L (м)" oninput="recalc()">
-        <input type="number" id="w0" placeholder="Ширина W (м)" oninput="recalc()">
-        <div class="split-box">
-            <label style="font-size: 10px; font-weight: bold;">ПОДІЛ НА ЧАСТИНИ</label>
-            <div id="list0"></div>
-            <button class="btn-add" onclick="addPart(0)">+ Додати частину</button>
-        </div>
-    </div>
-
-    <div id="p1" class="page">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px">
-            <input type="number" id="sa" placeholder="Стор. A" oninput="recalc()">
-            <input type="number" id="sb" placeholder="Стор. B" oninput="recalc()">
-            <input type="number" id="sc" placeholder="Стор. C" oninput="recalc()">
-            <input type="number" id="sd" placeholder="Стор. D" oninput="recalc()">
-        </div>
-        <input type="number" id="dg" placeholder="Діагональ (м)" oninput="recalc()">
-        <div class="split-box">
-            <div id="list1"></div>
-            <button class="btn-add" onclick="addPart(1)">+ Додати ділянку</button>
-        </div>
-    </div>
-
-    <div id="p2" class="page">
-        <div style="background:#e3f2fd; padding:10px; border-radius:8px; font-size:12px">
-            📍 Клікніть на карті, щоб встановити кут A. Використовуйте повзунок для повороту.
-        </div>
-        <input type="range" id="angle" min="0" max="360" value="0" oninput="recalc()">
-        <div id="map"></div>
-    </div>
-
-    <div id="p3" class="page">
-        <input type="number" id="sk" placeholder="Відома сторона (м)" oninput="recalc()">
-        <input type="number" id="fm2" placeholder="Площа (м²)" oninput="syncF(0)">
-        <input type="number" id="fsot" placeholder="Площа (сотки)" oninput="syncF(1)">
-    </div>
-
-    <div class="res-box">
-        <div class="res-row"><span>Площа:</span><b><span id="res_m2">0</span> м²</b></div>
-        <div class="res-row"><span>Сотки:</span><b><span id="res_sot">0</span> сот.</b></div>
-        <div id="parts_res" style="margin-top:5px; border-top:1px dashed #ccc; padding-top:5px"></div>
-    </div>
-
-    <div id="canvas-wrap"><canvas id="mc" width="400" height="300"></canvas></div>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px">
-        <button class="btn-add" style="background:#2196f3" onclick="window.print()">Звіт PDF</button>
-        <button class="btn-add" style="background:#666" onclick="location.reload()">Очистити</button>
-    </div>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    let mode = 0, map, mapLayer, parts = {0:[], 1:[]};
-    const canv = document.getElementById('mc'), ctx = canv.getContext('2d');
-    const colors = ["rgba(211, 47, 47, 0.4)", "rgba(25, 118, 210, 0.4)", "rgba(255, 193, 7, 0.4)"];
-
-    function setMode(m) {
-        mode = m;
-        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === m));
-        document.querySelectorAll('.page').forEach((p, i) => p.classList.toggle('active', i === m));
-        document.getElementById('map').style.display = (m === 2) ? 'block' : 'none';
-        document.getElementById('canvas-wrap').style.display = (m === 3) ? 'none' : 'block';
-        if (m === 2) { 
-            if(!map) initMap(); 
-            setTimeout(() => map.invalidateSize(), 200); 
-        }
-        recalc();
-    }
-
-    function initMap() {
-        map = L.map('map').setView([49.444, 24.941], 16);
-        L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
-        map.on('click', e => { window.lastLat = e.latlng.lat; window.lastLon = e.latlng.lng; recalc(); });
-    }
-
-    function addPart(m) {
-        parts[m].push({m2:0, w:0});
-        renderParts(m);
-    }
-
-    function renderParts(m) {
-        const div = document.getElementById('list' + m);
-        div.innerHTML = '';
-        parts[m].forEach((p, i) => {
-            div.innerHTML += `<div class="part-row">
-                <button class="btn-del" onclick="parts[${m}].splice(${i},1); renderParts(${m}); recalc();">×</button>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px">
-                    <input type="number" placeholder="м²" value="${p.m2||''}" oninput="parts[${m}][${i}].m2=this.value; recalc()">
-                    <input type="number" placeholder="${m===0?'':'Ширина'}" ${m===0?'style="display:none"':''} value="${p.w||''}" oninput="parts[${m}][${i}].w=this.value; recalc()">
-                </div>
-            </div>`;
-        });
-    }
-
-    function syncF(t) {
-        let m2 = document.getElementById('fm2'), sot = document.getElementById('fsot');
-        if (t===0) sot.value = (m2.value/100).toFixed(2); else m2.value = (sot.value*100).toFixed(2);
-        recalc();
-    }
-
-    function recalc() {
-        let area = 0; ctx.clearRect(0,0,400,300);
-        document.getElementById('parts_res').innerHTML = '';
-
-        if (mode === 0) {
-            let l = parseFloat(document.getElementById('l0').value)||0, w = parseFloat(document.getElementById('w0').value)||0;
-            area = l * w; drawR(l, w);
-        } else if (mode === 1) {
-            let a=parseFloat(document.getElementById('sa').value)||0, b=parseFloat(document.getElementById('sb').value)||0,
-                c=parseFloat(document.getElementById('sc').value)||0, d=parseFloat(document.getElementById('sd').value)||0, dg=parseFloat(document.getElementById('dg').value)||0;
-            area = (h(a,b,dg) + h(c,d,dg)); drawP(a,b,c,d,dg);
-        } else if (mode === 3) {
-            let sk = parseFloat(document.getElementById('sk').value)||0, tm = parseFloat(document.getElementById('fm2').value)||0;
-            document.getElementById('oside').innerText = sk > 0 ? (tm/sk).toFixed(2) : "0.00";
-        }
-        document.getElementById('res_m2').innerText = area.toFixed(2);
-        document.getElementById('res_sot').innerText = (area/100).toFixed(2);
-    }
-
-    function h(a,b,c) { let p=(a+b+c)/2; return (p*(p-a)*(p-b)*(p-c) > 0) ? Math.sqrt(p*(p-a)*(p-b)*(p-c)) : 0; }
-
-    function drawR(l,w) {
-        if(!l || !w) return;
-        let sc = Math.min(300/l, 200/w), cur=0;
-        ctx.fillStyle = "rgba(46,125,50,0.1)"; ctx.fillRect(50,50,l*sc,w*sc);
-        parts[0].forEach((p,i) => {
-            let d = p.m2/w; ctx.fillStyle = colors[i%3]; ctx.fillRect(50+cur*sc, 50, d*sc, w*sc);
-            cur += d; addR(`Діл.${i+1}: Межа ${cur.toFixed(2)}м`);
-        });
-        ctx.strokeRect(50,50,l*sc,w*sc);
-    }
-
-    function drawP(a,b,c,d,dg) {
-        if(!a || !dg) return;
-        let cA=(a*a+dg*dg-b*b)/(2*a*dg), cD=(d*d+dg*dg-c*c)/(2*d*dg);
-        let sA=Math.sqrt(1-cA*cA), sD=Math.sqrt(1-cD*cD), sc=Math.min(300/dg, 150/Math.max(a*sA, d*sD));
-        let p1={x:50,y:150}, p2={x:50+dg*sc,y:150}, p3={x:50+a*cA*sc,y:150-a*sA*sc}, p4={x:50+d*cD*sc,y:150+d*sD*sc};
-        
-        ctx.save();
-        ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p3.x,p3.y); ctx.lineTo(p2.x,p2.y); ctx.lineTo(p4.x,p4.y); ctx.closePath();
-        ctx.clip(); ctx.fillStyle = "rgba(46,125,50,0.1)"; ctx.fill();
-        
-        let cum = 0;
-        parts[1].forEach((p,i) => {
-            if(p.m2 > 0 && p.w > 0) {
-                let dep = p.m2/p.w, ang = Math.atan2(p3.y-p1.y, p3.x-p1.x);
-                ctx.save(); ctx.translate(p1.x, p1.y); ctx.rotate(ang);
-                ctx.fillStyle = colors[i%3]; ctx.fillRect(-500, cum*sc,
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
+            <div class="field"><label>Довжина (м)</label><input type="number" id="l0" oninput="doCalc()"></div>
+            <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput
