@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro Master</title>
+    <title>LandCalc Pro — Total Control</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --p: #2e7d32; --bg: #f0f2f5; --accent: #d32f2f; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
         .app { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 480px; }
-        h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; font-size: 22px; font-weight: 800; }
+        h2 { color: var(--p); text-align: center; margin: 0 0 10px 0; font-size: 22px; font-weight: 800; }
         
         .tabs { display: flex; gap: 4px; margin-bottom: 15px; background: #eee; padding: 4px; border-radius: 8px; }
         .tab { flex: 1; padding: 10px 2px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 11px; font-weight: bold; background: none; border: none; color: #666; }
@@ -18,28 +18,27 @@
         .page { display: none; } .page.active { display: block; }
         .field { margin-bottom: 8px; }
         label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #555; text-transform: uppercase; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
         
         .split-box { background: #fffde7; padding: 12px; border-radius: 10px; border: 1px solid #fff9c4; margin-top: 10px; }
         .part-row { background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 8px; position: relative; }
         .btn-add { width: 100%; padding: 12px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 5px; }
-        .btn-del { position: absolute; top: -5px; right: -5px; background: #ffcdd2; color: #c62828; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+        .btn-del { position: absolute; top: -5px; right: -5px; background: #ffcdd2; color: #c62828; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; }
 
         .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 15px; }
-        .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 14px; }
+        .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 15px; }
         .val { font-weight: bold; color: var(--p); }
         
         #canvas-wrap { margin-top: 15px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; }
         canvas { width: 100%; height: auto; display: block; }
-        #map { height: 350px; width: 100%; border-radius: 10px; margin-top: 10px; border: 2px solid var(--p); }
+        #map { height: 350px; width: 100%; border-radius: 10px; margin-top: 10px; border: 2px solid var(--p); display: none; }
 
         .btn-group { display: flex; gap: 8px; margin-top: 10px; }
         .btn-action { flex: 1; padding: 12px; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 12px; text-align: center; }
 
         @media print {
-            .tabs, .btn-add, .split-box, .btn-del, .btn-group, .btn-reset, #p2-controls { display: none !important; }
+            .tabs, .btn-add, .split-box, .btn-del, .btn-group, .btn-reset, #map-ctrl { display: none !important; }
             .app { box-shadow: none; max-width: 100%; }
-            #map { height: 500px; }
         }
     </style>
 </head>
@@ -48,50 +47,50 @@
     <h2 onclick="location.reload()">LandCalc Pro</h2>
     
     <div class="tabs">
-        <button id="t0" class="tab active" onclick="setTab(0)">Прямокутник</button>
-        <button id="t1" class="tab" onclick="setTab(1)">Довільна</button>
-        <button id="t2" class="tab" onclick="setTab(2)">🗺️ Карта</button>
-        <button id="t3" class="tab" onclick="setTab(3)">Пошук</button>
+        <button class="tab active" onclick="setMode(0)">Прямокутник</button>
+        <button class="tab" onclick="setMode(1)">Довільна</button>
+        <button class="tab" onclick="setMode(2)">🗺️ Карта</button>
+        <button class="tab" onclick="setMode(3)">Пошук</button>
     </div>
 
     <div id="p0" class="page active">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-            <div class="field"><label>Довжина (м)</label><input type="number" id="l0" oninput="doCalc()"></div>
-            <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput="doCalc()"></div>
+            <div class="field"><label>Довжина (м)</label><input type="number" id="l0" oninput="run()"></div>
+            <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput="run()"></div>
         </div>
         <div class="split-box">
-            <label>✂️ Поділ на частини</label>
+            <label>✂️ Пошаровий поділ</label>
             <div id="list0"></div>
-            <button class="btn-add" onclick="addPart(0)">+ Додати частину</button>
+            <button class="btn-add" onclick="addP(0)">+ Додати частину</button>
         </div>
     </div>
 
     <div id="p1" class="page">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-            <input type="number" id="sa" placeholder="Стор. A (Фасад)" oninput="doCalc()">
-            <input type="number" id="sb" placeholder="Стор. B" oninput="doCalc()">
-            <input type="number" id="sc" placeholder="Стор. C" oninput="doCalc()">
-            <input type="number" id="sd" placeholder="Стор. D" oninput="doCalc()">
+            <input type="number" id="sa" placeholder="Стор. A" oninput="run()">
+            <input type="number" id="sb" placeholder="Стор. B" oninput="run()">
+            <input type="number" id="sc" placeholder="Стор. C" oninput="run()">
+            <input type="number" id="sd" placeholder="Стор. D" oninput="run()">
         </div>
-        <div class="field" style="margin-top:8px"><label>Діагональ (м)</label><input type="number" id="dg" oninput="doCalc()"></div>
+        <input type="number" id="dg" placeholder="Діагональ (м)" style="margin-top:8px" oninput="run()">
         <div class="split-box">
-            <label>✂️ Поділ паралельно фасаду</label>
+            <label>✂️ Поділ паралельно A</label>
             <div id="list1"></div>
-            <button class="btn-add" onclick="addPart(1)">+ Додати частину</button>
+            <button class="btn-add" onclick="addP(1)">+ Додати частину</button>
         </div>
     </div>
 
     <div id="p2" class="page">
-        <div id="p2-controls" style="background:#e3f2fd; padding:10px; border-radius:8px; margin-bottom:10px;">
-            <label>🧭 Поворот (Азимут): <span id="ang_v">0</span>°</label>
-            <input type="range" id="angle" min="0" max="360" value="0" oninput="updateGeo()">
-            <button class="btn-add" style="background:#1976d2" onclick="locateMe()">📍 Моя локація</button>
+        <div id="map-ctrl" style="background:#e3f2fd; padding:10px; border-radius:8px; margin-bottom:10px;">
+            <label>🧭 Поворот (Азимут): <span id="av">0</span>°</label>
+            <input type="range" id="angle" min="0" max="360" value="0" oninput="run()">
+            <button class="btn-add" style="background:#1976d2" onclick="geoLoc()">📍 Моя локація</button>
         </div>
         <div id="map"></div>
     </div>
 
     <div id="p3" class="page">
-        <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" oninput="doCalc()"></div>
+        <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" oninput="run()"></div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
             <div class="field"><label>м²</label><input type="number" id="fm2" oninput="syncF(0)"></div>
             <div class="field"><label>сотки</label><input type="number" id="fsot" oninput="syncF(1)"></div>
@@ -99,13 +98,13 @@
     </div>
 
     <div class="res-box">
-        <div id="res-normal">
-            <div class="res-row"><span>Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
-            <div class="res-row"><span>Сотки:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
-            <div id="multi-res" style="margin-top:8px; border-top:1px dashed #ccc; padding-top:8px"></div>
+        <div id="res-box-main">
+            <div class="res-row"><span>Площа:</span><b><span id="om2">0</span> м²</b></div>
+            <div class="res-row"><span>Сотки:</span><b><span id="osot">0</span> сот.</b></div>
+            <div id="parts-info" style="margin-top:8px; border-top:1px dashed #ccc; padding-top:8px"></div>
         </div>
-        <div id="res-find" style="display:none">
-            <div class="res-row"><span>Шукана сторона:</span><span><span id="oside" class="val">0.00</span> м</span></div>
+        <div id="res-box-find" style="display:none">
+            <div class="res-row"><span>Шукана сторона:</span><b><span id="oside">0</span> м</b></div>
         </div>
     </div>
 
@@ -119,89 +118,77 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    let mode = 0, map, geoLayer, parts = { 0: [], 1: [] };
+    let mode = 0, map, geoPoly, parts = { 0: [], 1: [] };
     const canv = document.getElementById('mc'), ctx = canv.getContext('2d');
-    const colors = ["rgba(211, 47, 47, 0.4)", "rgba(25, 118, 210, 0.4)", "rgba(255, 193, 7, 0.4)", "rgba(156, 39, 176, 0.4)"];
+    const colors = ["rgba(211, 47, 47, 0.4)", "rgba(25, 118, 210, 0.4)", "rgba(255, 193, 7, 0.4)"];
 
-    function setTab(idx) {
-        mode = idx;
-        document.querySelectorAll('.tab').forEach((t, i) => t.className = (i === idx) ? 'tab active' : 'tab');
-        document.querySelectorAll('.page').forEach((p, i) => p.className = (i === idx) ? 'page active' : 'page');
-        document.getElementById('res-normal').style.display = idx === 3 ? 'none' : 'block';
-        document.getElementById('res-find').style.display = idx === 3 ? 'block' : 'none';
-        document.getElementById('canvas-wrap').style.display = (idx === 2 || idx === 3) ? 'none' : 'block';
-        if (idx === 2) { 
-            if(!map) initMap();
-            setTimeout(() => { map.invalidateSize(); updateGeo(); }, 200);
-        }
-        doCalc();
+    function setMode(m) {
+        mode = m;
+        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === m));
+        document.querySelectorAll('.page').forEach((p, i) => p.classList.toggle('active', i === m));
+        document.getElementById('map').style.display = (m === 2) ? 'block' : 'none';
+        document.getElementById('res-box-main').style.display = (m === 3) ? 'none' : 'block';
+        document.getElementById('res-box-find').style.display = (m === 3) ? 'block' : 'none';
+        document.getElementById('canvas-wrap').style.display = (m === 2 || m === 3) ? 'none' : 'block';
+        if (m === 2) { if(!map) initMap(); setTimeout(() => map.invalidateSize(), 200); }
+        run();
     }
 
     function initMap() {
-        map = L.map('map').setView([49.444, 24.941], 17);
-        L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { subdomains:['mt0','mt1','mt2','mt3'] }).addTo(map);
-        map.on('click', e => { window.baseLat = e.latlng.lat; window.baseLon = e.latlng.lng; updateGeo(); });
+        map = L.map('map').setView([49.444, 24.941], 16);
+        L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {subdomains:['mt0','mt1','mt2','mt3']}).addTo(map);
+        map.on('click', e => { window.bL = e.latlng.lat; window.bN = e.latlng.lng; run(); });
     }
 
-    function locateMe() {
+    function geoLoc() {
         navigator.geolocation.getCurrentPosition(p => {
-            window.baseLat = p.coords.latitude; window.baseLon = p.coords.longitude;
-            map.setView([window.baseLat, window.baseLon], 19);
-            updateGeo();
+            window.bL = p.coords.latitude; window.bN = p.coords.longitude;
+            map.setView([window.bL, window.bN], 19); run();
         });
     }
 
-    function addPart(m) {
-        parts[m].push({ m2: 0 });
-        renderParts(m);
-    }
-
-    function renderParts(m) {
-        const div = document.getElementById('list' + m);
-        div.innerHTML = '';
+    function addP(m) { parts[m].push({ m2: 0 }); renderP(m); }
+    function renderP(m) {
+        const d = document.getElementById('list' + m); d.innerHTML = '';
         parts[m].forEach((p, i) => {
-            const row = document.createElement('div');
-            row.className = 'part-row';
-            row.innerHTML = `<button class="btn-del" onclick="parts[${m}].splice(${i},1); renderParts(${m}); doCalc();">×</button>
+            const r = document.createElement('div'); r.className = 'part-row';
+            r.innerHTML = `<button class="btn-del" onclick="parts[${m}].splice(${i},1); renderP(${m}); run();">×</button>
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-                    <div><label>м²</label><input type="number" value="${p.m2||''}" oninput="parts[${m}][${i}].m2=parseFloat(this.value)||0; doCalc()"></div>
-                    <div><label>сотки</label><input type="number" value="${p.m2?(p.m2/100).toFixed(2):''}" oninput="parts[${m}][${i}].m2=parseFloat(this.value)*100||0; doCalc()"></div>
+                    <div><label>м²</label><input type="number" value="${p.m2||''}" oninput="parts[${m}][${i}].m2=parseFloat(this.value)||0; run();"></div>
+                    <div><label>сотки</label><input type="number" value="${p.m2?(p.m2/100).toFixed(2):''}" oninput="parts[${m}][${i}].m2=parseFloat(this.value)*100||0; run();"></div>
                 </div>`;
-            div.appendChild(row);
+            d.appendChild(r);
         });
     }
 
     function syncF(t) {
         let m2 = document.getElementById('fm2'), sot = document.getElementById('fsot');
-        if (t === 0) sot.value = (m2.value / 100).toFixed(2);
-        else m2.value = (sot.value * 100).toFixed(2);
-        doCalc();
+        if (t === 0) sot.value = (m2.value / 100).toFixed(2); else m2.value = (sot.value * 100).toFixed(2);
+        run();
     }
 
     function resetApp() {
         document.querySelectorAll('input').forEach(i => i.value = '');
-        parts = { 0: [], 1: [] };
-        renderParts(0); renderParts(1);
-        doCalc();
+        parts = { 0: [], 1: [] }; renderP(0); renderP(1); run();
     }
 
-    function heron(a, b, c) {
-        let p = (a + b + c) / 2;
-        let val = p * (p - a) * (p - b) * (p - c);
-        return val > 0 ? Math.sqrt(val) : 0;
+    function h(a, b, c) {
+        let p = (a + b + c) / 2; let v = p * (p - a) * (p - b) * (p - c);
+        return v > 0 ? Math.sqrt(v) : 0;
     }
 
-    function doCalc() {
+    function run() {
         let area = 0; ctx.clearRect(0, 0, 400, 300);
-        document.getElementById('multi-res').innerHTML = '';
+        document.getElementById('parts-info').innerHTML = '';
+
         if (mode === 0) {
             let l = parseFloat(document.getElementById('l0').value)||0, w = parseFloat(document.getElementById('w0').value)||0;
-            area = l * w; if (l>0 && w>0) drawRect(l, w);
+            area = l * w; if (l>0 && w>0) drawR(l, w);
         } else if (mode === 1) {
             let a=parseFloat(document.getElementById('sa').value)||0, b=parseFloat(document.getElementById('sb').value)||0,
                 c=parseFloat(document.getElementById('sc').value)||0, d=parseFloat(document.getElementById('sd').value)||0, dg=parseFloat(document.getElementById('dg').value)||0;
-            area = heron(a, b, dg) + heron(c, d, dg);
-            if (a>0 && dg>0) drawPoly(a, b, c, d, dg);
+            area = h(a, b, dg) + h(c, d, dg);
+            if (a>0 && dg>0) drawP(a, b, c, d, dg);
         } else if (mode === 3) {
             let sk = parseFloat(document.getElementById('sk').value)||0, tm = parseFloat(document.getElementById('fm2').value)||0;
             document.getElementById('oside').innerText = sk > 0 ? (tm / sk).toFixed(2) : "0.00";
@@ -211,4 +198,64 @@
         if (mode === 2) updateGeo();
     }
 
-    function drawRect(l
+    function drawR(l, w) {
+        let sc = Math.min(300/l, 200/w), dw = l*sc, dh = w*sc, cur = 0;
+        ctx.fillStyle = "rgba(46, 125, 50, 0.1)"; ctx.fillRect(50, 50, dw, dh);
+        parts[0].forEach((p, i) => {
+            if (p.m2 > 0) {
+                let dep = p.m2 / w; ctx.fillStyle = colors[i % 3];
+                ctx.fillRect(50 + cur*sc, 50, dep*sc, dh); cur += dep;
+                addInfo(`Діл.${i+1}: Межа на ${cur.toFixed(2)}м`);
+            }
+        });
+        ctx.strokeStyle = "#2e7d32"; ctx.lineWidth = 2; ctx.strokeRect(50, 50, dw, dh);
+    }
+
+    function drawP(a, b, c, d, dg) {
+        let cA=(a*a+dg*dg-b*b)/(2*a*dg), cD=(d*d+dg*dg-c*c)/(2*d*dg);
+        if (Math.abs(cA)>1 || Math.abs(cD)>1) return;
+        let sA=Math.sqrt(1-cA*cA), sD=Math.sqrt(1-cD*cD), sc=Math.min(300/dg, 150/Math.max(a*sA, d*sD));
+        let p1={x:50,y:150}, p2={x:50+dg*sc,y:150}, p3={x:50+a*cA*sc,y:150-a*sA*sc}, p4={x:50+d*cD*sc,y:150+d*sD*sc};
+        
+        ctx.save();
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.closePath();
+        ctx.clip(); // Усуває щілини на межах
+        ctx.fillStyle = "rgba(46, 125, 50, 0.1)"; ctx.fill();
+        let cur = 0;
+        parts[1].forEach((p, i) => {
+            if (p.m2 > 0) {
+                let dep = p.m2 / a, ang = Math.atan2(p3.y-p1.y, p3.x-p1.x);
+                ctx.save(); ctx.translate(p1.x, p1.y); ctx.rotate(ang);
+                ctx.fillStyle = colors[i % 3]; ctx.fillRect(-1000, cur*sc, 2000, dep*sc);
+                ctx.restore(); cur += dep; addInfo(`Діл.${i+1}: Глибина ${dep.toFixed(2)}м (разом ${cur.toFixed(2)}м)`);
+            }
+        });
+        ctx.restore(); ctx.strokeStyle = "#2e7d32"; ctx.lineWidth = 2; 
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.closePath(); ctx.stroke();
+        ctx.fillStyle="#000"; ctx.fillText("A", p1.x-10, p1.y); ctx.fillText("D", p4.x, p4.y+15);
+    }
+
+    function updateGeo() {
+        if (!map || !window.bL) return;
+        if (geoPoly) map.removeLayer(geoPoly);
+        const ang = parseFloat(document.getElementById('angle').value);
+        document.getElementById('av').innerText = ang;
+        const R = 6378137;
+        const toGPS = (lt, ln, x, y) => [ lt + (y/R)*(180/Math.PI), ln + (x/(R*Math.cos(lt*Math.PI/180)))*(180/Math.PI) ];
+        let l = parseFloat(document.getElementById('l0').value) || 20;
+        let w = parseFloat(document.getElementById('w0').value) || 15;
+        let rd = (ang-90) * Math.PI / 180;
+        let pts = [ [window.bL, window.bN], toGPS(window.bL, window.bN, l*Math.cos(rd), l*Math.sin(rd)),
+            toGPS(window.bL, window.bN, l*Math.cos(rd) + w*Math.cos(rd+Math.PI/2), l*Math.sin(rd) + w*Math.sin(rd+Math.PI/2)),
+            toGPS(window.bL, window.bN, w*Math.cos(rd+Math.PI/2), w*Math.sin(rd+Math.PI/2)) ];
+        geoPoly = L.polygon(pts, {color: 'red', fillOpacity: 0.4}).addTo(map);
+    }
+
+    function addInfo(t) {
+        const d = document.createElement('div'); d.className = 'res-row';
+        d.innerHTML = `<span style="color:var(--accent); font-weight:bold">${t}</span>`;
+        document.getElementById('parts-info').appendChild(d);
+    }
+</script>
+</body>
+</html>
