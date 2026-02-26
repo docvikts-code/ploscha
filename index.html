@@ -3,48 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro — Прямокутний Поділ</title>
+    <title>LandCalc Ultimate — Професійний Поділ</title>
     <style>
         :root { --p: #2e7d32; --bg: #f0f2f5; --accent: #d32f2f; }
         body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
         .app { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 440px; }
-        
         #js-status { text-align: center; font-size: 10px; font-weight: bold; color: green; margin-bottom: 10px; }
         h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; font-size: 20px; }
-        
         .tabs { display: flex; gap: 4px; margin-bottom: 15px; background: #eee; padding: 4px; border-radius: 8px; }
         .tab { flex: 1; padding: 10px 2px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 11px; font-weight: bold; background: none; border: none; color: #666; transition: 0.2s; }
         .tab.active { background: white; color: var(--p); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
-        .page { display: none; }
-        .page.active { display: block; }
-        
+        .page { display: none; } .page.active { display: block; }
         .field { margin-bottom: 10px; }
-        label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; text-transform: uppercase; }
+        label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #555; text-transform: uppercase; }
         input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
         input:focus { border-color: var(--p); border-width: 2px; }
-        
+        .dir-group { display: flex; gap: 5px; margin-top: 8px; }
+        .dir-btn { flex: 1; padding: 6px; font-size: 10px; font-weight: bold; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; background: #fff; }
+        .dir-btn.active { background: var(--p); color: white; border-color: var(--p); }
         .split-box { background: #fffde7; padding: 10px; border-radius: 8px; border: 1px solid #fff9c4; margin-top: 5px; }
-        .split-title { font-size: 11px; font-weight: bold; color: #f57f17; margin-bottom: 5px; display: block; }
-
         .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 15px; }
         .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 15px; }
         .val { font-weight: bold; color: var(--p); }
         .split-val { color: var(--accent); font-weight: bold; }
-
-        #canvas-wrap { margin-top: 15px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; position: relative; }
+        #canvas-wrap { margin-top: 15px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; }
         canvas { width: 100%; height: auto; display: block; }
-        
         .btn-clear { width: 100%; padding: 10px; background: #fff1f1; border: 1px solid #ffcdd2; color: #c62828; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; font-size: 12px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-
 <div class="app">
     <div id="js-status">JS АКТИВНИЙ</div>
-    <h2>LandCalc Pro Max</h2>
-    
+    <h2>LandCalc Ultimate</h2>
     <div class="tabs">
         <button id="t0" class="tab active" onclick="setTab(0)">Прямокутник</button>
         <button id="t1" class="tab" onclick="setTab(1)">Довільна</button>
@@ -53,67 +44,62 @@
 
     <div id="p0" class="page active">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-            <div class="field"><label>Довжина ділянки (м)</label><input type="number" id="l0" oninput="doCalc()"></div>
-            <div class="field"><label>Ширина ділянки (м)</label><input type="number" id="w0" oninput="doCalc()"></div>
+            <div class="field"><label>Довжина (м)</label><input type="number" id="l0" oninput="doCalc()"></div>
+            <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput="doCalc()"></div>
         </div>
         <div class="split-box">
-            <span class="split-title">✂️ Поділ прямокутника</span>
+            <label>✂️ Поділ прямокутника</label>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-                <input type="number" id="sM2_0" placeholder="Площа м²" oninput="syncSplit(0, 0)">
-                <input type="number" id="sSot_0" placeholder="Сотки" oninput="syncSplit(0, 1)">
+                <input type="number" id="sm2_0" placeholder="м²" oninput="doCalc()">
+                <div class="dir-group">
+                    <button id="dv" class="dir-btn active" onclick="setDir('v')">Впоперек</button>
+                    <button id="dh" class="dir-btn" onclick="setDir('h')">Вздовж</button>
+                </div>
             </div>
         </div>
     </div>
 
     <div id="p1" class="page">
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-            <div class="field"><label>Стор. A</label><input type="number" id="sa" oninput="doCalc()"></div>
-            <div class="field"><label>Стор. B</label><input type="number" id="sb" oninput="doCalc()"></div>
-            <div class="field"><label>Стор. C</label><input type="number" id="sc" oninput="doCalc()"></div>
-            <div class="field"><label>Стор. D</label><input type="number" id="sd" oninput="doCalc()"></div>
+            <input type="number" id="sa" placeholder="Стор. A" oninput="doCalc()">
+            <input type="number" id="sb" placeholder="Стор. B" oninput="doCalc()">
+            <input type="number" id="sc" placeholder="Стор. C" oninput="doCalc()">
+            <input type="number" id="sd" placeholder="Стор. D" oninput="doCalc()">
         </div>
-        <div class="field"><label>Діагональ (м)</label><input type="number" id="dg" oninput="doCalc()"></div>
+        <div class="field" style="margin-top:8px"><label>Діагональ (м)</label><input type="number" id="dg" oninput="doCalc()"></div>
         <div class="split-box">
-            <span class="split-title">✂️ Вписати прямокутник за площею</span>
+            <label>✂️ Вписати прямокутник</label>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-                <input type="number" id="sM2_1" placeholder="Площа м²" oninput="syncSplit(1, 0)">
+                <input type="number" id="sm2_1" placeholder="Площа м²" oninput="doCalc()">
                 <input type="number" id="sw_1" placeholder="Ширина (м)" oninput="doCalc()">
             </div>
+            <div class="field" style="margin-top:5px"><label>Відступ від початку (м)</label><input type="number" id="soff_1" value="0" oninput="doCalc()"></div>
         </div>
     </div>
 
     <div id="p2" class="page">
         <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" oninput="doCalc()"></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
-            <div class="field"><label>Площа (м²)</label><input type="number" id="tm2" oninput="syncFind(0)"></div>
-            <div class="field"><label>Площа (сотки)</label><input type="number" id="tsot" oninput="syncFind(1)"></div>
-        </div>
+        <div class="field"><label>Площа (м²)</label><input type="number" id="tm2" oninput="doCalc()"></div>
     </div>
 
     <div class="res-box">
         <div id="res-std">
-            <div class="res-row"><span>Загальна площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
-            <div class="res-row"><span>У сотках:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
-            <div id="split-info" class="hidden" style="margin-top:8px; border-top:1px dashed #c8e6c9; padding-top:8px;">
-                <div class="res-row"><span style="color:var(--accent)" id="split-label">Глибина прямокутника:</span><span><span id="dist" class="split-val">0.00</span> м</span></div>
+            <div class="res-row"><span>Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
+            <div id="split-info" class="hidden" style="margin-top:5px; border-top:1px dashed #ccc; padding-top:5px">
+                <div class="res-row"><span style="color:var(--accent)">Параметр поділу:</span><span><span id="dist" class="split-val">0.00</span> м</span></div>
             </div>
         </div>
         <div id="res-find" class="hidden">
             <div class="res-row"><span>Шукана сторона:</span><span><span id="oside" class="val">0.00</span> м</span></div>
         </div>
     </div>
-
-    <div id="canvas-wrap">
-        <canvas id="mc" width="400" height="300"></canvas>
-    </div>
-
+    <div id="canvas-wrap"><canvas id="mc" width="400" height="300"></canvas></div>
     <button class="btn-clear" onclick="clearAll()">Очистити все</button>
 </div>
 
 <script>
-    let mode = 0;
-    const canv = document.getElementById('mc');
-    const ctx = canv.getContext('2d');
+    let mode = 0, splitDir = 'v';
+    const canv = document.getElementById('mc'), ctx = canv.getContext('2d');
 
     function setTab(idx) {
         mode = idx;
@@ -127,27 +113,14 @@
         doCalc();
     }
 
-    function syncSplit(mIdx, type) {
-        let m2 = document.getElementById('sM2_'+mIdx), sot = document.getElementById('sSot_0');
-        if (mIdx === 0 && type === 1) {
-            m2.value = (parseFloat(sot.value) * 100 || 0).toFixed(2);
-        } else if (mIdx === 0 && type === 0) {
-            if(sot) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
-        }
+    function setDir(d) {
+        splitDir = d;
+        document.getElementById('dv').className = 'dir-btn' + (d==='v' ? ' active' : '');
+        document.getElementById('dh').className = 'dir-btn' + (d==='h' ? ' active' : '');
         doCalc();
     }
 
-    function syncFind(type) {
-        let m2 = document.getElementById('tm2'), sot = document.getElementById('tsot');
-        if (type === 0) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
-        else m2.value = (parseFloat(sot.value) * 100 || 0).toFixed(2);
-        doCalc();
-    }
-
-    function clearAll() {
-        document.querySelectorAll('input').forEach(i => i.value = '');
-        doCalc();
-    }
+    function clearAll() { document.querySelectorAll('input').forEach(i => i.value = ''); doCalc(); }
 
     function heron(a, b, c) {
         if (a+b<=c || a+c<=b || b+c<=a) return 0;
@@ -155,49 +128,36 @@
     }
 
     function doCalc() {
-        let area = 0, splitL = 0, splitW = 0;
+        let area = 0, splitL = 0;
         ctx.clearRect(0, 0, canv.width, canv.height);
+        document.getElementById('split-info').classList.add('hidden');
 
         if (mode === 0) {
-            let l = parseFloat(document.getElementById('l0').value) || 0;
-            let w = parseFloat(document.getElementById('w0').value) || 0;
-            let sm2 = parseFloat(document.getElementById('sM2_0').value) || 0;
+            let l = parseFloat(document.getElementById('l0').value) || 0, w = parseFloat(document.getElementById('w0').value) || 0;
+            let sm2 = parseFloat(document.getElementById('sm2_0').value) || 0;
             area = l * w;
             if (area > 0 && sm2 > 0 && sm2 <= area) {
-                splitL = sm2 / w;
+                splitL = (splitDir === 'v') ? sm2 / w : sm2 / l;
                 document.getElementById('dist').innerText = splitL.toFixed(2);
                 document.getElementById('split-info').classList.remove('hidden');
-                document.getElementById('split-label').innerText = "Глибина відрізу:";
-            } else document.getElementById('split-info').classList.add('hidden');
+            }
             drawRect(l, w, splitL);
-        } 
-        else if (mode === 1) {
-            let a = parseFloat(document.getElementById('sa').value) || 0, b = parseFloat(document.getElementById('sb').value) || 0;
-            let c = parseFloat(document.getElementById('sc').value) || 0, d = parseFloat(document.getElementById('sd').value) || 0;
-            let dg = parseFloat(document.getElementById('dg').value) || 0;
-            let sm2 = parseFloat(document.getElementById('sM2_1').value) || 0;
-            let sw = parseFloat(document.getElementById('sw_1').value) || 0;
-            
+        } else if (mode === 1) {
+            let a=parseFloat(document.getElementById('sa').value)||0, b=parseFloat(document.getElementById('sb').value)||0;
+            let c=parseFloat(document.getElementById('sc').value)||0, d=parseFloat(document.getElementById('sd').value)||0, dg=parseFloat(document.getElementById('dg').value)||0;
+            let sm2=parseFloat(document.getElementById('sm2_1').value)||0, sw=parseFloat(document.getElementById('sw_1').value)||0, off=parseFloat(document.getElementById('soff_1').value)||0;
             area = heron(a, b, dg) + heron(c, d, dg);
-            
-            if (area > 0 && sm2 > 0 && sw > 0) {
+            if (sm2 > 0 && sw > 0) {
                 splitL = sm2 / sw;
-                splitW = sw;
                 document.getElementById('dist').innerText = splitL.toFixed(2);
                 document.getElementById('split-info').classList.remove('hidden');
-                document.getElementById('split-label').innerText = "Довжина прямокутника:";
-            } else document.getElementById('split-info').classList.add('hidden');
-            
-            drawPoly(a, b, c, d, dg, splitW, splitL);
-        } 
-        else if (mode === 2) {
-            let sk = parseFloat(document.getElementById('sk').value) || 0;
-            let tm = parseFloat(document.getElementById('tm2').value) || 0;
-            document.getElementById('oside').innerText = sk > 0 ? (tm / sk).toFixed(2) : "0.00";
+            }
+            drawPoly(a, b, c, d, dg, sw, splitL, off);
+        } else {
+            let sk = parseFloat(document.getElementById('sk').value)||0, tm = parseFloat(document.getElementById('tm2').value)||0;
+            document.getElementById('out-side').innerText = sk > 0 ? (tm / sk).toFixed(2) : "0.00";
         }
-
         document.getElementById('om2').innerText = area.toFixed(2);
-        document.getElementById('osot').innerText = (area / 100).toFixed(2);
     }
 
     function drawRect(l, w, sl) {
@@ -205,35 +165,26 @@
         let sc = Math.min(300/l, 200/w), dw = l*sc, dh = w*sc, x = 50, y = 50;
         ctx.fillStyle = "rgba(46, 125, 50, 0.1)"; ctx.fillRect(x, y, dw, dh);
         if (sl > 0) {
-            ctx.fillStyle = "rgba(211, 47, 47, 0.2)"; ctx.fillRect(x, y, sl*sc, dh);
-            ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.strokeStyle = "var(--accent)";
-            ctx.moveTo(x + sl*sc, y); ctx.lineTo(x + sl*sc, y + dh); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = "rgba(211, 47, 47, 0.2)";
+            if (splitDir === 'v') ctx.fillRect(x, y, sl*sc, dh); else ctx.fillRect(x, y, dw, sl*sc);
         }
-        ctx.strokeStyle = "var(--p)"; ctx.lineWidth = 2; ctx.strokeRect(x, y, dw, dh);
+        ctx.strokeStyle = "var(--p)"; ctx.strokeRect(x, y, dw, dh);
     }
 
-    function drawPoly(a, b, c, d, dg, sw, sl) {
+    function drawPoly(a, b, c, d, dg, sw, sl, off) {
         if (a<=0 || b<=0 || dg<=0) return;
         let cA=(a*a+dg*dg-b*b)/(2*a*dg), cD=(d*d+dg*dg-c*c)/(2*d*dg);
         if (Math.abs(cA)>1 || Math.abs(cD)>1) return;
-        let sA=Math.sqrt(1-cA*cA), sD=Math.sqrt(1-cD*cD);
-        let sc=Math.min(300/dg, 150/Math.max(a*sA, d*sD));
+        let sA=Math.sqrt(1-cA*cA), sD=Math.sqrt(1-cD*cD), sc=Math.min(300/dg, 150/Math.max(a*sA, d*sD));
         let p1={x:50,y:150}, p2={x:50+dg*sc,y:150}, p3={x:50+a*cA*sc,y:150-a*sA*sc}, p4={x:50+d*cD*sc,y:150+d*sD*sc};
-
         ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.closePath();
         ctx.fillStyle = "rgba(46, 125, 50, 0.1)"; ctx.fill(); ctx.strokeStyle = "var(--p)"; ctx.stroke();
-        
-        // Малювання вписаного прямокутника (від точки P1 вздовж діагоналі)
         if (sw > 0 && sl > 0) {
             ctx.fillStyle = "rgba(211, 47, 47, 0.3)";
-            ctx.fillRect(p1.x, p1.y - (sw*sc/2), sl*sc, sw*sc);
-            ctx.strokeStyle = "var(--accent)";
-            ctx.setLineDash([2, 2]);
-            ctx.strokeRect(p1.x, p1.y - (sw*sc/2), sl*sc, sw*sc);
-            ctx.setLineDash([]);
+            ctx.fillRect(p1.x + off*sc, p1.y - (sw*sc/2), sl*sc, sw*sc);
         }
-        ctx.setLineDash([5, 5]); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = "#ccc"; ctx.stroke(); ctx.setLineDash([]);
     }
+    setTab(0);
 </script>
 </body>
 </html>
