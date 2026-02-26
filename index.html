@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro — Geo Sync</title>
+    <title>LandCalc Pro — Final Master</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root { --p: #2e7d32; --bg: #f0f2f5; --accent: #d32f2f; }
@@ -16,8 +16,8 @@
         .page { display: none; } .page.active { display: block; }
         input, select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; margin-bottom: 8px; }
         .split-box { background: #fffde7; padding: 12px; border-radius: 10px; border: 1px solid #fff9c4; margin-top: 10px; }
-        .part-row { background: white; padding: 8px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 8px; position: relative; }
-        .btn-add { width: 100%; padding: 12px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .part-row { background: white; padding: 10px; border-radius: 8px; border: 1px solid #eee; margin-bottom: 8px; position: relative; }
+        .btn-add { width: 100%; padding: 12px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 5px; }
         .btn-del { position: absolute; top: -5px; right: -5px; background: #ffcdd2; color: #c62828; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: center; }
         .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 15px; }
         #map { height: 400px; width: 100%; border-radius: 10px; margin-top: 10px; border: 2px solid var(--p); }
@@ -47,7 +47,7 @@
                 <button id="rh" class="dir-btn" onclick="setRDir('h')">Вздовж</button>
             </div>
             <div id="list0"></div>
-            <button class="btn-add" onclick="addP(0)">+ Додати частину</button>
+            <button class="btn-add" onclick="addP(0)">+ Частину</button>
         </div>
     </div>
 
@@ -65,18 +65,19 @@
                 <option value="d">Від сторони D</option>
             </select>
             <div id="list1"></div>
-            <button class="btn-add" onclick="addP(1)">+ Додати частину</button>
+            <button class="btn-add" onclick="addP(1)">+ Частину</button>
         </div>
     </div>
 
     <div id="p2" class="page">
         <div style="background:#e3f2fd; padding:10px; border-radius:8px; margin-bottom:10px">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:10px">
-                <input type="number" id="lat" placeholder="Lat" step="0.000001" oninput="run()">
-                <input type="number" id="lon" placeholder="Lon" step="0.000001" oninput="run()">
+                <input type="number" id="lat" placeholder="Широта (Lat)" step="0.000001" oninput="run()">
+                <input type="number" id="lon" placeholder="Довгота (Lon)" step="0.000001" oninput="run()">
             </div>
-            <label style="font-size:10px; font-weight:bold">🧭 Азимут: <span id="av">0</span>°</label>
+            <label style="font-size:10px; font-weight:bold">🧭 Азимут фасаду: <span id="av">0</span>°</label>
             <input type="range" id="ang" min="0" max="360" value="0" oninput="run()">
+            <button class="btn-add" style="background:#1976d2; margin-top:10px" onclick="geo()">📍 Моя локація</button>
         </div>
         <div id="map"></div>
     </div>
@@ -132,6 +133,14 @@
         });
     }
 
+    function geo() {
+        navigator.geolocation.getCurrentPosition(p => {
+            document.getElementById('lat').value = p.coords.latitude.toFixed(6);
+            document.getElementById('lon').value = p.coords.longitude.toFixed(6);
+            map.setView([p.coords.latitude, p.coords.longitude], 19); run();
+        });
+    }
+
     function setRDir(d) { 
         rectDir = d; 
         document.getElementById('rv').classList.toggle('active', d==='v');
@@ -181,7 +190,7 @@
 
     function drawR(l, w) {
         let sc = Math.min(300/l, 200/w), cur = 0;
-        ctx.fillStyle = "rgba(46,125,50,0.1)"; ctx.fillRect(50,50,l*sc,w*sc);
+        ctx.fillStyle = "rgba(46,125,50,0.1)"; ctx.fillRect(50, 50, l*sc, w*sc);
         parts[0].forEach((p, i) => {
             if (p.m2 > 0) {
                 let dep = p.m2 / (rectDir === 'v' ? w : l);
@@ -190,7 +199,8 @@
                 else { ctx.fillRect(50, 50+cur*sc, l*sc, dep*sc); cur+=dep; addRes(`Ч.${i+1}: Ширина ${cur.toFixed(2)}м`); }
             }
         });
-        ctx.strokeStyle = "#2e7d32"; ctx.lineWidth = 2; ctx.strokeRect(50,50,l*sc,w*sc);
+        ctx.strokeStyle = "#2e7d32"; ctx.lineWidth = 2; ctx.strokeRect(50, 50, l*sc, w*sc);
+        ctx.fillStyle="#000"; ctx.fillText("L", 50+l*sc/2, 45); ctx.fillText("W", 50+l*sc+5, 50+w*sc/2);
     }
 
     function drawPoly(a, b, c, d, dg) {
@@ -198,9 +208,11 @@
         if (Math.abs(cA)>1 || Math.abs(cD)>1) return;
         let sA=Math.sqrt(1-cA*cA), sD=Math.sqrt(1-cD*cD), sc=Math.min(300/dg, 150/Math.max(a*sA, d*sD));
         let p1={x:50,y:150}, p2={x:50+dg*sc,y:150}, p3={x:50+a*cA*sc,y:150-a*sA*sc}, p4={x:50+d*cD*sc,y:150+d*sD*sc};
+        
         ctx.save();
         ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p3.x,p3.y); ctx.lineTo(p2.x,p2.y); ctx.lineTo(p4.x,p4.y); ctx.closePath();
         ctx.clip(); ctx.fillStyle = "rgba(46,125,50,0.1)"; ctx.fill();
+        
         let cum = 0, base = document.getElementById('base_side').value;
         parts[1].forEach((p, i) => {
             if (p.m2 > 0) {
@@ -211,8 +223,13 @@
             }
         });
         ctx.restore(); ctx.strokeStyle = "#2e7d32"; ctx.lineWidth = 2; ctx.stroke();
+        
+        // ПІДПИСИ СТОРІН ПО ЦЕНТРУ ЛІНІЙ
         ctx.fillStyle="#000"; ctx.font="bold 12px Arial";
-        ctx.fillText("A", p1.x-10, p1.y); ctx.fillText("B", p3.x, p3.y-5); ctx.fillText("C", p2.x+5, p2.y); ctx.fillText("D", p4.x, p4.y+15);
+        ctx.fillText("A", (p1.x+p3.x)/2 - 12, (p1.y+p3.y)/2); // Стор A
+        ctx.fillText("B", (p3.x+p2.x)/2 + 5, (p3.y+p2.y)/2 - 5); // Стор B
+        ctx.fillText("C", (p2.x+p4.x)/2 + 8, (p2.y+p4.y)/2 + 10); // Стор C
+        ctx.fillText("D", (p4.x+p1.x)/2 - 12, (p4.y+p1.y)/2 + 15); // Стор D
     }
 
     function updateMap() {
@@ -229,9 +246,7 @@
         let w = parseFloat(document.getElementById('w0').value) || 15;
         let rd = (ang-90) * Math.PI / 180;
 
-        // Малюємо частини
-        let currentCumul = 0;
-        let m = mode === 0 ? 0 : 1;
+        let m = mode === 0 ? 0 : 1, currentCumul = 0;
         parts[m].forEach((p, i) => {
             if (p.m2 > 0) {
                 let dep = p.m2 / (mode === 0 ? (rectDir === 'v' ? w : l) : l);
@@ -239,16 +254,11 @@
                 let p2 = toG(lt, ln, (currentCumul + dep) * Math.cos(rd), (currentCumul + dep) * Math.sin(rd));
                 let p3 = toG(p2[0], p2[1], w * Math.cos(rd + Math.PI/2), w * Math.sin(rd + Math.PI/2));
                 let p4 = toG(p1[0], p1[1], w * Math.cos(rd + Math.PI/2), w * Math.sin(rd + Math.PI/2));
-                
                 L.polygon([p1, p2, p3, p4], {color: colors[i % 4], fillOpacity: 0.6}).addTo(geoGroup);
                 currentCumul += dep;
             }
         });
-
-        // Загальний контур
-        let pts = [ [lt, ln], toG(lt, ln, l*Math.cos(rd), l*Math.sin(rd)), 
-            toG(lt, ln, l*Math.cos(rd)+w*Math.cos(rd+Math.PI/2), l*Math.sin(rd)+w*Math.sin(rd+Math.PI/2)),
-            toG(lt, ln, w*Math.cos(rd+Math.PI/2), w*Math.sin(rd+Math.PI/2)) ];
+        let pts = [ [lt, ln], toG(lt, ln, l*Math.cos(rd), l*Math.sin(rd)), toG(lt, ln, l*Math.cos(rd)+w*Math.cos(rd+Math.PI/2), l*Math.sin(rd)+w*Math.sin(rd+Math.PI/2)), toG(lt, ln, w*Math.cos(rd+Math.PI/2), w*Math.sin(rd+Math.PI/2)) ];
         L.polygon(pts, {color: '#2e7d32', fillOpacity: 0.1, weight: 2}).addTo(geoGroup);
     }
 
