@@ -81,4 +81,146 @@
     </div>
 
     <button class="btn-clear" onclick="clearAll()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        Очистити все
+    </button>
+
+    <div class="res-box">
+        <div id="res-std">
+            <div class="res-line"><span class="res-label">Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
+            <div class="res-line"><span class="res-label">У сотках:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
+            <div class="res-line"><span class="res-label">Периметр:</span><span><span id="oper" class="val">0.00</span> м</span></div>
+        </div>
+        <div id="res-side" class="hidden">
+            <div class="res-line"><span class="res-label">Шукана сторона:</span><span><span id="oside" class="val">0.00</span> м</span></div>
+        </div>
+    </div>
+
+    <div class="canvas-container hidden" id="viz-box">
+        <span class="canvas-label">Схематичний план ділянки</span>
+        <canvas id="plotCanvas" width="400" height="250"></canvas>
+    </div>
+</div>
+
+<script>
+    let mode = 0;
+    const canvas = document.getElementById('plotCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function setTab(idx) {
+        mode = idx;
+        for (let i = 0; i < 3; i++) {
+            document.getElementById('t' + i).className = (i === idx) ? 'tab active' : 'tab';
+            document.getElementById('p' + i).className = (i === idx) ? 'page active' : 'page';
+        }
+        document.getElementById('res-std').className = (idx === 2) ? 'hidden' : '';
+        document.getElementById('res-side').className = (idx === 2) ? '' : 'hidden';
+        // Ховаємо візуалізацію в режимі пошуку
+        document.getElementById('viz-box').className = (idx === 2) ? 'canvas-container hidden' : 'canvas-container';
+        calc();
+    }
+
+    function sync(type) {
+        let m2 = document.getElementById('am2'), sot = document.getElementById('asot');
+        if (type === 0) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
+        else m2.value = (parseFloat(sot.value) * 100 || 0).toFixed(2);
+        calc();
+    }
+
+    function clearAll() {
+        document.querySelectorAll('.in').forEach(i => i.value = '');
+        calc();
+    }
+
+    function heron(a, b, c) {
+        if (a + b <= c || a + c <= b || b + c <= a) return 0;
+        let p = (a + b + c) / 2;
+        return Math.sqrt(p * (p - a) * (p - b) * (p - c));
+    }
+
+    function calc() {
+        let area = 0, perim = 0;
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Очистка canvas
+
+        if (mode === 0) {
+            let l = parseFloat(document.getElementById('l0').value) || 0;
+            let w = parseFloat(document.getElementById('w0').value) || 0;
+            area = l * w;
+            perim = (l + w) * 2;
+            if (l > 0 && w > 0) drawRect(l, w);
+        } 
+        else if (mode === 1) {
+            let a = parseFloat(document.getElementById('sa').value) || 0, b = parseFloat(document.getElementById('sb').value) || 0;
+            let c = parseFloat(document.getElementById('sc').value) || 0, d = parseFloat(document.getElementById('sd').value) || 0;
+            let dg = parseFloat(document.getElementById('dg').value) || 0;
+            area = heron(a, b, dg) + heron(c, d, dg);
+            perim = a + b + c + d;
+            if (area > 0) drawPoly(a, b, c, d, dg);
+        } 
+        else if (mode === 2) {
+            let side = parseFloat(document.getElementById('sk').value) || 0;
+            let targetArea = parseFloat(document.getElementById('am2').value) || 0;
+            document.getElementById('oside').innerText = side > 0 ? (targetArea / side).toFixed(2) : "0.00";
+        }
+        
+        updateUI(area, perim);
+    }
+
+    function updateUI(a, p) {
+        document.getElementById('om2').innerText = a.toFixed(2);
+        document.getElementById('osot').innerText = (a / 100).toFixed(2);
+        document.getElementById('oper').innerText = p.toFixed(2);
+    }
+
+    // --- Функції малювання ---
+
+    function drawRect(l, w) {
+        const padding = 40;
+        const maxWidth = canvas.width - padding * 2;
+        const maxHeight = canvas.height - padding * 2;
+        const scale = Math.min(maxWidth / l, maxHeight / w);
+        const drawL = l * scale;
+        const drawW = w * scale;
+        const startX = (canvas.width - drawL) / 2;
+        const startY = (canvas.height - drawW) / 2;
+
+        ctx.beginPath();
+        ctx.rect(startX, startY, drawL, drawW);
+        ctx.strokeStyle = '#2e7d32';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(46, 125, 50, 0.1)';
+        ctx.fill();
+
+        // Підписи
+        ctx.fillStyle = '#333';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText(`${l}м`, startX + drawL / 2 - 15, startY - 10);
+        ctx.fillText(`${w}м`, startX - 35, startY + drawW / 2 + 5);
+    }
+
+    // Складна математика для знаходження вершин трикутника
+    function getTriangleVertex(p1, p2, r1, r2) {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const d = Math.sqrt(dx * dx + dy * dy); // відстань між p1 і p2 (це наша діагональ)
+
+        // Перевірка на існування трикутника
+        if (d > r1 + r2 || d < Math.abs(r1 - r2) || d === 0) return null;
+
+        const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
+        const h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
+
+        const x2 = p1.x + a * (dx / d);
+        const y2 = p1.y + a * (dy / d);
+
+        // Повертаємо одну з двох точок перетину кіл
+        return {
+            x: x2 - h * (dy / d),
+            y: y2 + h * (dx / d)
+        };
+    }
+
+    function drawPoly(sa, sb, sc, sd, dg) {
+        // 1. Визначаємо координати вершин. Діагональ dg лежить на осі X.
+        const p1 =
