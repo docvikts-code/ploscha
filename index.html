@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro — Мульти-поділ</title>
+    <title>LandCalc Pro Ultimate</title>
     <style>
         :root { --p: #2e7d32; --bg: #f0f2f5; --accent: #d32f2f; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
-        .app { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 460px; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
+        .app { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 440px; }
+        #status { text-align: center; font-size: 10px; font-weight: bold; color: var(--p); margin-bottom: 10px; }
+        h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; font-size: 20px; }
         
         .tabs { display: flex; gap: 4px; margin-bottom: 15px; background: #eee; padding: 4px; border-radius: 8px; }
         .tab { flex: 1; padding: 10px 2px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 11px; font-weight: bold; background: none; border: none; color: #666; }
@@ -18,11 +20,10 @@
         label { display: block; font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #555; text-transform: uppercase; }
         input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px; outline: none; }
         
-        /* Стилі списку частин */
         .split-box { background: #fffde7; padding: 12px; border-radius: 10px; border: 1px solid #fff9c4; margin-top: 10px; }
-        .part-item { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; align-items: end; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
-        .btn-add { width: 100%; padding: 8px; background: var(--p); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; margin-top: 5px; }
-        .btn-del { background: #ffcdd2; color: #c62828; border: none; border-radius: 5px; padding: 10px; cursor: pointer; font-weight: bold; }
+        .part-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 8px; align-items: end; }
+        .btn-add { width: 100%; padding: 10px; background: var(--p); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-del { background: #ffcdd2; color: #c62828; border: none; border-radius: 8px; padding: 10px; cursor: pointer; font-weight: bold; }
 
         .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 15px; }
         .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 14px; }
@@ -30,15 +31,16 @@
         
         #canvas-wrap { margin-top: 15px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; }
         canvas { width: 100%; height: auto; display: block; }
-        .btn-clear { width: 100%; padding: 10px; background: #fff1f1; border: 1px solid #ffcdd2; color: #c62828; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 <div class="app">
+    <div id="status">JS АКТИВНИЙ</div>
+    <h2>LandCalc Pro</h2>
+    
     <div class="tabs">
         <button id="t0" class="tab active" onclick="setTab(0)">Прямокутник</button>
         <button id="t1" class="tab" onclick="setTab(1)">Довільна</button>
-        <button id="t2" class="tab" onclick="setTab(2)">Пошук</button>
     </div>
 
     <div id="p0" class="page active">
@@ -47,13 +49,9 @@
             <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput="doCalc()"></div>
         </div>
         <div class="split-box">
-            <label>✂️ Розподіл на частини</label>
-            <div id="parts-list-0"></div>
-            <button class="btn-add" onclick="addPart(0)">+ Додати частину</button>
-            <div class="dir-group" style="display:flex; gap:5px; margin-top:10px">
-                <button id="dv0" style="flex:1; font-size:10px" onclick="setRectDir('v')">Впоперек</button>
-                <button id="dh0" style="flex:1; font-size:10px" onclick="setRectDir('h')">Вздовж</button>
-            </div>
+            <label>✂️ Поділ на частини (м²)</label>
+            <div id="list0"></div>
+            <button class="btn-add" onclick="addPart(0)">+ Додати ділянку</button>
         </div>
     </div>
 
@@ -66,24 +64,143 @@
         </div>
         <div class="field" style="margin-top:8px"><label>Діагональ (м)</label><input type="number" id="dg" oninput="doCalc()"></div>
         <div class="split-box">
-            <label>✂️ Прямокутні наділи</label>
-            <div class="field"><select id="base_side" onchange="doCalc()"><option value="a">Від сторони A</option><option value="d">Від сторони D</option></select></div>
-            <div id="parts-list-1"></div>
-            <button class="btn-add" onclick="addPart(1)">+ Додати частину</button>
+            <label>✂️ Вписати прямокутники</label>
+            <select id="base_side" onchange="doCalc()" style="margin-bottom:8px">
+                <option value="a">Від сторони A</option>
+                <option value="d">Від сторони D</option>
+            </select>
+            <div id="list1"></div>
+            <button class="btn-add" onclick="addPart(1)">+ Додати прямокутник</button>
         </div>
     </div>
 
     <div class="res-box">
-        <div class="res-row"><span>Загальна площа:</span><span><span id="om2" class="val">0.00</span> м² (<span id="osot">0.00</span> сот.)</span></div>
+        <div class="res-row"><span>Загальна площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
         <div id="multi-res" style="margin-top:8px; border-top:1px dashed #ccc; padding-top:8px"></div>
     </div>
 
     <div id="canvas-wrap"><canvas id="mc" width="400" height="300"></canvas></div>
-    <button class="btn-clear" onclick="clearAll()">Очистити все</button>
+    <button class="btn-add" style="background:#666" onclick="location.reload()">Скинути все</button>
 </div>
 
 <script>
-    let mode = 0, rectDir = 'v';
+    let mode = 0;
     let parts = { 0: [], 1: [] };
     const canv = document.getElementById('mc'), ctx = canv.getContext('2d');
-    const colors = ["rgba(211, 47, 47, 0.3)", "rgba(25, 118, 210, 0.3)", "rgba(255, 193, 7, 0.3)", "rgba(156, 39, 176, 0.3)", "rgba(0, 18
+    const colors = ["rgba(211, 47, 47, 0.4)", "rgba(25, 118, 210, 0.4)", "rgba(255, 193, 7, 0.4)", "rgba(156, 39, 176, 0.4)"];
+
+    function setTab(idx) {
+        mode = idx;
+        document.querySelectorAll('.tab').forEach((t, i) => t.className = (i === idx) ? 'tab active' : 'tab');
+        document.querySelectorAll('.page').forEach((p, i) => p.className = (i === idx) ? 'page active' : 'page');
+        doCalc();
+    }
+
+    function addPart(m) {
+        parts[m].push({ m2: 0, w: 0 });
+        renderParts(m);
+    }
+
+    function removePart(m, i) {
+        parts[m].splice(i, 1);
+        renderParts(m);
+        doCalc();
+    }
+
+    function renderParts(m) {
+        const div = document.getElementById('list' + m);
+        div.innerHTML = '';
+        parts[m].forEach((p, i) => {
+            const row = document.createElement('div');
+            row.className = 'part-row';
+            row.innerHTML = `
+                <input type="number" placeholder="м²" value="${p.m2||''}" oninput="updateVal(${m},${i},'m2',this.value)">
+                <input type="number" placeholder="Ширина" ${m===0?'style="display:none"':''} value="${p.w||''}" oninput="updateVal(${m},${i},'w',this.value)">
+                <button class="btn-del" onclick="removePart(${m},${i})">×</button>
+            `;
+            div.appendChild(row);
+        });
+    }
+
+    function updateVal(m, i, key, val) {
+        parts[m][i][key] = parseFloat(val) || 0;
+        doCalc();
+    }
+
+    function heron(a, b, c) {
+        if (a+b<=c || a+c<=b || b+c<=a) return 0;
+        let p = (a+b+c)/2; return Math.sqrt(p*(p-a)*(p-b)*(p-c));
+    }
+
+    function doCalc() {
+        let area = 0;
+        ctx.clearRect(0, 0, canv.width, canv.height);
+        const res = document.getElementById('multi-res');
+        res.innerHTML = '';
+
+        if (mode === 0) {
+            let l = parseFloat(document.getElementById('l0').value)||0, w = parseFloat(document.getElementById('w0').value)||0;
+            area = l * w;
+            drawRect(l, w, parts[0]);
+        } else {
+            let a=parseFloat(document.getElementById('sa').value)||0, b=parseFloat(document.getElementById('sb').value)||0,
+                c=parseFloat(document.getElementById('sc').value)||0, d=parseFloat(document.getElementById('sd').value)||0, dg=parseFloat(document.getElementById('dg').value)||0;
+            area = heron(a, b, dg) + heron(c, d, dg);
+            drawPoly(a, b, c, d, dg, parts[1]);
+        }
+        document.getElementById('om2').innerText = area.toFixed(2);
+    }
+
+    function drawRect(l, w, pArr) {
+        if (l <= 0 || w <= 0) return;
+        let sc = Math.min(300/l, 200/w), dw = l*sc, dh = w*sc, x = 50, y = 50;
+        ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fillRect(x, y, dw, dh);
+        
+        let curX = 0;
+        pArr.forEach((p, i) => {
+            if (p.m2 > 0) {
+                let dist = p.m2 / w;
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fillRect(x + curX*sc, y, dist*sc, dh);
+                curX += dist;
+                addRes(`Діл.${i+1}: Відступ межі ${curX.toFixed(2)}м`);
+            }
+        });
+        ctx.strokeStyle = "#2e7d32"; ctx.strokeRect(x, y, dw, dh);
+    }
+
+    function drawPoly(a, b, c, d, dg, pArr) {
+        if (a<=0 || b<=0 || dg<=0) return;
+        let cA=(a*a+dg*dg-b*b)/(2*a*dg), cD=(d*d+dg*dg-c*c)/(2*d*dg);
+        if (Math.abs(cA)>1 || Math.abs(cD)>1) return;
+        let sA=Math.sqrt(1-cA*cA), sD=Math.sqrt(1-cD*cD), sc=Math.min(300/dg, 150/Math.max(a*sA, d*sD));
+        let p1={x:50,y:150}, p2={x:50+dg*sc,y:150}, p3={x:50+a*cA*sc,y:150-a*sA*sc}, p4={x:50+d*cD*sc,y:150+d*sD*sc};
+        
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p3.x, p3.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.closePath();
+        ctx.fillStyle = "rgba(0,0,0,0.05)"; ctx.fill(); ctx.strokeStyle = "#2e7d32"; ctx.stroke();
+
+        let curOff = 0;
+        pArr.forEach((p, i) => {
+            if (p.m2 > 0 && p.w > 0) {
+                let len = p.m2 / p.w;
+                ctx.save();
+                let side = document.getElementById('base_side').value;
+                let angle = Math.atan2((side==='a'?p3.y:p4.y)-p1.y, (side==='a'?p3.x:p4.x)-p1.x);
+                ctx.translate(p1.x, p1.y); ctx.rotate(angle);
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.fillRect(curOff*sc, 0, p.w*sc, (side==='a'?1:-1)*len*sc);
+                ctx.restore();
+                curOff += p.w;
+                addRes(`Діл.${i+1}: Глибина ${len.toFixed(2)}м (відступ ${curOff.toFixed(2)}м)`);
+            }
+        });
+    }
+
+    function addRes(t) {
+        const d = document.createElement('div');
+        d.className = 'res-row'; d.innerHTML = `<span style="color:var(--accent)">${t}</span>`;
+        document.getElementById('multi-res').appendChild(d);
+    }
+</script>
+</body>
+</html>
