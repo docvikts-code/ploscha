@@ -3,224 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro + Візуалізація</title>
+    <title>LandCalc — Робоча Візуалізація</title>
     <style>
-        :root { --p: #2e7d32; --bg: #f4f4f4; --red: #d32f2f; }
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; color: #333; }
-        .app { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
-        h2 { color: var(--p); text-align: center; margin: 0 0 20px 0; font-weight: 700; }
+        :root { --p: #2e7d32; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 10px; margin: 0; }
+        .app { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
         
-        /* Tabs */
-        .tabs { display: flex; background: #f0f2f5; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
-        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; font-size: 13px; font-weight: 600; color: #666; transition: all 0.2s ease; }
-        .tab.active { background: white; color: var(--p); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        
-        /* Pages & Inputs */
-        .page { display: none; animation: fadeIn 0.3s ease; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .field { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
-        input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; -moz-appearance: textfield; }
-        input:focus { border-color: var(--p); outline: none; }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        /* Статус для перевірки */
+        #status { font-size: 10px; text-align: center; color: #888; margin-bottom: 10px; border: 1px solid #ddd; padding: 2px; }
 
-        /* Buttons */
-        .btn-clear { width: 100%; padding: 12px; background: #ffebee; border: none; color: var(--red); border-radius: 10px; cursor: pointer; font-weight: 700; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-clear:hover { background: #ffcdd2; }
+        .tabs { display: flex; gap: 4px; margin-bottom: 15px; background: #eee; padding: 4px; border-radius: 8px; }
+        .tab { flex: 1; padding: 10px 5px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: bold; background: none; border: none; color: #666; }
+        .tab.active { background: white; color: var(--p); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         
-        /* Results */
-        .res-box { background: #e8f5e9; padding: 20px; border-radius: 12px; margin-top: 25px; }
-        .res-line { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #c8e6c9; }
-        .res-line:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-        .res-label { color: #555; }
-        .val { font-weight: 800; color: var(--p); font-size: 18px; }
+        .section { display: none; }
+        .section.active { display: block; }
+        
+        .field { margin-bottom: 10px; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #444; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        
+        .btn-clear { width: 100%; padding: 10px; background: #fff1f1; border: 1px solid #ffcdd2; color: #c62828; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+
+        .res-box { background: #e8f5e9; padding: 12px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 15px; }
+        .res-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 16px; }
+        .val { font-weight: bold; color: var(--p); }
+
+        /* Canvas */
+        #canvas-wrap { margin-top: 15px; border: 1px dashed #aaa; border-radius: 8px; background: #fafafa; position: relative; }
+        canvas { width: 100%; height: auto; display: block; }
         .hidden { display: none; }
-        
-        /* CANVAS Vizualization */
-        .canvas-container { margin-top: 25px; text-align: center; }
-        #plotCanvas { background: #fafafa; border: 2px dashed #ddd; border-radius: 12px; max-width: 100%; }
-        .canvas-label { font-size: 12px; color: #888; margin-bottom: 5px; display: block;font-weight: bold;}
     </style>
 </head>
 <body>
 
 <div class="app">
-    <h2>LandCalc Pro</h2>
+    <div id="status">Система готова. Натисніть вкладку.</div>
     
     <div class="tabs">
-        <div id="t0" class="tab active" onclick="setTab(0)">Прямокутник</div>
-        <div id="t1" class="tab" onclick="setTab(1)">Довільна</div>
-        <div id="t2" class="tab" onclick="setTab(2)">Пошук</div>
+        <button id="t0" class="tab active" onclick="setMode(0)">Прямокутник</button>
+        <button id="t1" class="tab" onclick="setMode(1)">Довільна</button>
+        <button id="t2" class="tab" onclick="setMode(2)">Пошук</button>
     </div>
 
-    <div id="p0" class="page active">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-            <div class="field"><label>Довжина (м)</label><input type="number" id="l0" class="in" placeholder="0" oninput="calc()"></div>
-            <div class="field"><label>Ширина (м)</label><input type="number" id="w0" class="in" placeholder="0" oninput="calc()"></div>
+    <div id="p0" class="section active">
+        <div class="field"><label>Довжина (м)</label><input type="number" id="l0" oninput="calculate()"></div>
+        <div class="field"><label>Ширина (м)</label><input type="number" id="w0" oninput="calculate()"></div>
+    </div>
+
+    <div id="p1" class="section">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px">
+            <div class="field"><label>Стор. A</label><input type="number" id="sa" oninput="calculate()"></div>
+            <div class="field"><label>Стор. B</label><input type="number" id="sb" oninput="calculate()"></div>
+            <div class="field"><label>Стор. C</label><input type="number" id="sc" oninput="calculate()"></div>
+            <div class="field"><label>Стор. D</label><input type="number" id="sd" oninput="calculate()"></div>
         </div>
+        <div class="field"><label>Діагональ (м)</label><input type="number" id="dg" oninput="calculate()"></div>
     </div>
 
-    <div id="p1" class="page">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-            <div class="field"><label>Сторона A</label><input type="number" id="sa" class="in" placeholder="0" oninput="calc()"></div>
-            <div class="field"><label>Сторона B</label><input type="number" id="sb" class="in" placeholder="0" oninput="calc()"></div>
-            <div class="field"><label>Сторона C</label><input type="number" id="sc" class="in" placeholder="0" oninput="calc()"></div>
-            <div class="field"><label>Сторона D</label><input type="number" id="sd" class="in" placeholder="0" oninput="calc()"></div>
-        </div>
-        <div class="field"><label>Діагональ (між AB і CD)</label><input type="number" id="dg" class="in" placeholder="0" oninput="calc()"></div>
+    <div id="p2" class="section">
+        <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" oninput="calculate()"></div>
+        <div class="field"><label>Площа (м²)</label><input type="number" id="am2" oninput="sync(0)"></div>
+        <div class="field"><label>Площа (сотки)</label><input type="number" id="asot" oninput="sync(1)"></div>
     </div>
 
-    <div id="p2" class="page">
-        <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" class="in" placeholder="0" oninput="calc()"></div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-            <div class="field"><label>Площа (м²)</label><input type="number" id="am2" class="in" placeholder="0" oninput="sync(0)"></div>
-            <div class="field"><label>Площа (сотки)</label><input type="number" id="asot" class="in" placeholder="0" oninput="sync(1)"></div>
-        </div>
-    </div>
-
-    <button class="btn-clear" onclick="clearAll()">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-        Очистити все
-    </button>
+    <button class="btn-clear" onclick="clearAll()">Скинути все</button>
 
     <div class="res-box">
-        <div id="res-std">
-            <div class="res-line"><span class="res-label">Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
-            <div class="res-line"><span class="res-label">У сотках:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
-            <div class="res-line"><span class="res-label">Периметр:</span><span><span id="oper" class="val">0.00</span> м</span></div>
+        <div id="res-normal">
+            <div class="res-row"><span>Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
+            <div class="res-row"><span>Сотки:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
+            <div class="res-row"><span>Периметр:</span><span><span id="oper" class="val">0.00</span> м</span></div>
         </div>
         <div id="res-side" class="hidden">
-            <div class="res-line"><span class="res-label">Шукана сторона:</span><span><span id="oside" class="val">0.00</span> м</span></div>
+            <div class="res-row"><span>Потрібна сторона:</span><span><span id="oside" class="val">0.00</span> м</span></div>
         </div>
     </div>
 
-    <div class="canvas-container hidden" id="viz-box">
-        <span class="canvas-label">Схематичний план ділянки</span>
-        <canvas id="plotCanvas" width="400" height="250"></canvas>
+    <div id="canvas-wrap">
+        <canvas id="mc" width="400" height="300"></canvas>
     </div>
 </div>
 
 <script>
     let mode = 0;
-    const canvas = document.getElementById('plotCanvas');
-    const ctx = canvas.getContext('2d');
+    const canv = document.getElementById('mc');
+    const ctx = canv.getContext('2d');
 
-    function setTab(idx) {
-        mode = idx;
-        for (let i = 0; i < 3; i++) {
-            document.getElementById('t' + i).className = (i === idx) ? 'tab active' : 'tab';
-            document.getElementById('p' + i).className = (i === idx) ? 'page active' : 'page';
-        }
-        document.getElementById('res-std').className = (idx === 2) ? 'hidden' : '';
-        document.getElementById('res-side').className = (idx === 2) ? '' : 'hidden';
-        // Ховаємо візуалізацію в режимі пошуку
-        document.getElementById('viz-box').className = (idx === 2) ? 'canvas-container hidden' : 'canvas-container';
-        calc();
+    function log(msg) { document.getElementById('status').innerText = msg; }
+
+    function setMode(n) {
+        mode = n;
+        log("Зміна режиму на: " + n);
+        document.querySelectorAll('.tab').forEach((t, i) => t.className = (i === n ? 'tab active' : 'tab'));
+        document.querySelectorAll('.section').forEach((p, i) => p.className = (i === n ? 'section active' : 'section'));
+        
+        document.getElementById('res-normal').style.display = (n === 2 ? 'none' : 'block');
+        document.getElementById('res-side').style.display = (n === 2 ? 'block' : 'none');
+        document.getElementById('canvas-wrap').style.display = (n === 2 ? 'none' : 'block');
+        
+        calculate();
     }
 
-    function sync(type) {
-        let m2 = document.getElementById('am2'), sot = document.getElementById('asot');
-        if (type === 0) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
+    function sync(t) {
+        const m2 = document.getElementById('am2'), sot = document.getElementById('asot');
+        if (t === 0) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
         else m2.value = (parseFloat(sot.value) * 100 || 0).toFixed(2);
-        calc();
+        calculate();
     }
 
     function clearAll() {
-        document.querySelectorAll('.in').forEach(i => i.value = '');
-        calc();
+        document.querySelectorAll('input').forEach(i => i.value = '');
+        calculate();
     }
 
-    function heron(a, b, c) {
+    function getArea(a, b, c) {
         if (a + b <= c || a + c <= b || b + c <= a) return 0;
         let p = (a + b + c) / 2;
         return Math.sqrt(p * (p - a) * (p - b) * (p - c));
     }
 
-    function calc() {
-        let area = 0, perim = 0;
-        ctx.clearRect(0, 0, canvas.width, canvas.height); // Очистка canvas
+    function calculate() {
+        log("Обчислення...");
+        let area = 0, peri = 0;
 
         if (mode === 0) {
             let l = parseFloat(document.getElementById('l0').value) || 0;
             let w = parseFloat(document.getElementById('w0').value) || 0;
-            area = l * w;
-            perim = (l + w) * 2;
-            if (l > 0 && w > 0) drawRect(l, w);
-        } 
-        else if (mode === 1) {
-            let a = parseFloat(document.getElementById('sa').value) || 0, b = parseFloat(document.getElementById('sb').value) || 0;
-            let c = parseFloat(document.getElementById('sc').value) || 0, d = parseFloat(document.getElementById('sd').value) || 0;
+            area = l * w; peri = (l + w) * 2;
+            drawRect(l, w);
+        } else if (mode === 1) {
+            let a = parseFloat(document.getElementById('sa').value) || 0;
+            let b = parseFloat(document.getElementById('sb').value) || 0;
+            let c = parseFloat(document.getElementById('sc').value) || 0;
+            let d = parseFloat(document.getElementById('sd').value) || 0;
             let dg = parseFloat(document.getElementById('dg').value) || 0;
-            area = heron(a, b, dg) + heron(c, d, dg);
-            perim = a + b + c + d;
-            if (area > 0) drawPoly(a, b, c, d, dg);
-        } 
-        else if (mode === 2) {
-            let side = parseFloat(document.getElementById('sk').value) || 0;
-            let targetArea = parseFloat(document.getElementById('am2').value) || 0;
-            document.getElementById('oside').innerText = side > 0 ? (targetArea / side).toFixed(2) : "0.00";
+            area = getArea(a, b, dg) + getArea(c, d, dg);
+            peri = a + b + c + d;
+            drawPoly(a, b, c, d, dg);
+        } else if (mode === 2) {
+            let sk = parseFloat(document.getElementById('sk').value) || 0;
+            let m2 = parseFloat(document.getElementById('am2').value) || 0;
+            document.getElementById('oside').innerText = sk > 0 ? (m2 / sk).toFixed(2) : "0.00";
         }
-        
-        updateUI(area, perim);
-    }
 
-    function updateUI(a, p) {
-        document.getElementById('om2').innerText = a.toFixed(2);
-        document.getElementById('osot').innerText = (a / 100).toFixed(2);
-        document.getElementById('oper').innerText = p.toFixed(2);
+        document.getElementById('om2').innerText = area.toFixed(2);
+        document.getElementById('osot').innerText = (area / 100).toFixed(2);
+        document.getElementById('oper').innerText = peri.toFixed(2);
     }
-
-    // --- Функції малювання ---
 
     function drawRect(l, w) {
-        const padding = 40;
-        const maxWidth = canvas.width - padding * 2;
-        const maxHeight = canvas.height - padding * 2;
-        const scale = Math.min(maxWidth / l, maxHeight / w);
-        const drawL = l * scale;
-        const drawW = w * scale;
-        const startX = (canvas.width - drawL) / 2;
-        const startY = (canvas.height - drawW) / 2;
+        ctx.clearRect(0, 0, canv.width, canv.height);
+        if (l <= 0 || w <= 0) return;
+        let s = Math.min(300 / l, 200 / w);
+        ctx.fillStyle = "rgba(46, 125, 50, 0.2)";
+        ctx.strokeStyle = "#2e7d32";
+        ctx.lineWidth = 2;
+        ctx.fillRect(50, 50, l * s, w * s);
+        ctx.strokeRect(50, 50, l * s, w * s);
+    }
+
+    function drawPoly(a, b, c, d, dg) {
+        ctx.clearRect(0, 0, canv.width, canv.height);
+        if (a<=0 || b<=0 || dg<=0) return;
+        
+        // Математика координат
+        let cosA = (a*a + dg*dg - b*b) / (2*a*dg);
+        if (Math.abs(cosA) > 1) return;
+        let sinA = Math.sqrt(1 - cosA*cosA);
+        
+        let cosD = (d*d + dg*dg - c*c) / (2*d*dg);
+        if (Math.abs(cosD) > 1) return;
+        let sinD = Math.sqrt(1 - cosD*cosD);
+
+        let scale = Math.min(300/dg, 150/Math.max(a*sinA, d*sinD));
+        let p1 = {x: 50, y: 150};
+        let p2 = {x: 50 + dg*scale, y: 150};
+        let p3 = {x: 50 + a*cosA*scale, y: 150 - a*sinA*scale};
+        let p4 = {x: 50 + d*cosD*scale, y: 150 + d*sinD*scale};
 
         ctx.beginPath();
-        ctx.rect(startX, startY, drawL, drawW);
-        ctx.strokeStyle = '#2e7d32';
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(46, 125, 50, 0.1)';
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p3.x, p3.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.lineTo(p4.x, p4.y);
+        ctx.closePath();
+        ctx.fillStyle = "rgba(46, 125, 50, 0.2)";
         ctx.fill();
-
-        // Підписи
-        ctx.fillStyle = '#333';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText(`${l}м`, startX + drawL / 2 - 15, startY - 10);
-        ctx.fillText(`${w}м`, startX - 35, startY + drawW / 2 + 5);
+        ctx.strokeStyle = "#2e7d32";
+        ctx.stroke();
+        
+        // Діагональ
+        ctx.setLineDash([5, 5]);
+        ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+        ctx.setLineDash([]);
     }
 
-    // Складна математика для знаходження вершин трикутника
-    function getTriangleVertex(p1, p2, r1, r2) {
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const d = Math.sqrt(dx * dx + dy * dy); // відстань між p1 і p2 (це наша діагональ)
-
-        // Перевірка на існування трикутника
-        if (d > r1 + r2 || d < Math.abs(r1 - r2) || d === 0) return null;
-
-        const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
-        const h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
-
-        const x2 = p1.x + a * (dx / d);
-        const y2 = p1.y + a * (dy / d);
-
-        // Повертаємо одну з двох точок перетину кіл
-        return {
-            x: x2 - h * (dy / d),
-            y: y2 + h * (dx / d)
-        };
-    }
-
-    function drawPoly(sa, sb, sc, sd, dg) {
-        // 1. Визначаємо координати вершин. Діагональ dg лежить на осі X.
-        const p1 =
+    calculate(); // Стартовий запуск
+</script>
+</body>
+</html>
