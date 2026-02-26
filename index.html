@@ -3,35 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LandCalc Pro + Периметр</title>
+    <title>LandCalc Pro + Візуалізація</title>
     <style>
-        :root { --p: #2e7d32; --bg: #f4f4f4; --red: #c62828; }
-        body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; }
-        .app { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 100%; max-width: 420px; }
-        h2 { color: var(--p); text-align: center; margin: 0 0 15px 0; }
+        :root { --p: #2e7d32; --bg: #f4f4f4; --red: #d32f2f; }
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: var(--bg); display: flex; justify-content: center; padding: 15px; margin: 0; color: #333; }
+        .app { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { color: var(--p); text-align: center; margin: 0 0 20px 0; font-weight: 700; }
         
-        .tabs { display: flex; background: #eee; border-radius: 8px; padding: 3px; margin-bottom: 20px; }
-        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: bold; color: #666; transition: 0.2s; }
-        .tab.active { background: white; color: var(--p); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        /* Tabs */
+        .tabs { display: flex; background: #f0f2f5; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 8px; font-size: 13px; font-weight: 600; color: #666; transition: all 0.2s ease; }
+        .tab.active { background: white; color: var(--p); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         
-        .page { display: none; }
+        /* Pages & Inputs */
+        .page { display: none; animation: fadeIn 0.3s ease; }
         .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        .field { margin-bottom: 12px; }
-        label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; transition: 0.2s; }
-        input:focus { border: 2px solid var(--p); }
-        
-        /* Кнопки */
-        .btn-clear { width: 100%; padding: 10px; background: none; border: 1px solid var(--red); color: var(--red); border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; transition: 0.2s; }
-        .btn-clear:hover { background: #ffebee; }
+        .field { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: #555; text-transform: uppercase; letter-spacing: 0.5px; }
+        input { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; box-sizing: border-box; font-size: 16px; transition: border-color 0.2s; -moz-appearance: textfield; }
+        input:focus { border-color: var(--p); outline: none; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
-        /* Результати */
-        .res-box { background: #e8f5e9; padding: 15px; border-radius: 10px; border-left: 5px solid var(--p); margin-top: 20px; }
-        .res-line { display: flex; justify-content: space-between; font-size: 17px; margin: 6px 0; border-bottom: 1px dashed #c8e6c9; padding-bottom: 4px; }
-        .res-line:last-child { border: none; }
-        .val { font-weight: bold; color: var(--p); }
+        /* Buttons */
+        .btn-clear { width: 100%; padding: 12px; background: #ffebee; border: none; color: var(--red); border-radius: 10px; cursor: pointer; font-weight: 700; margin-top: 10px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-clear:hover { background: #ffcdd2; }
+        
+        /* Results */
+        .res-box { background: #e8f5e9; padding: 20px; border-radius: 12px; margin-top: 25px; }
+        .res-line { display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #c8e6c9; }
+        .res-line:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .res-label { color: #555; }
+        .val { font-weight: 800; color: var(--p); font-size: 18px; }
         .hidden { display: none; }
+        
+        /* CANVAS Vizualization */
+        .canvas-container { margin-top: 25px; text-align: center; }
+        #plotCanvas { background: #fafafa; border: 2px dashed #ddd; border-radius: 12px; max-width: 100%; }
+        .canvas-label { font-size: 12px; color: #888; margin-bottom: 5px; display: block;font-weight: bold;}
     </style>
 </head>
 <body>
@@ -46,104 +56,29 @@
     </div>
 
     <div id="p0" class="page active">
-        <div class="field"><label>Довжина (м)</label><input type="number" id="l0" class="in" oninput="calc()"></div>
-        <div class="field"><label>Ширина (м)</label><input type="number" id="w0" class="in" oninput="calc()"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div class="field"><label>Довжина (м)</label><input type="number" id="l0" class="in" placeholder="0" oninput="calc()"></div>
+            <div class="field"><label>Ширина (м)</label><input type="number" id="w0" class="in" placeholder="0" oninput="calc()"></div>
+        </div>
     </div>
 
     <div id="p1" class="page">
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div class="field"><label>Стор. A</label><input type="number" id="sa" class="in" oninput="calc()"></div>
-            <div class="field"><label>Стор. B</label><input type="number" id="sb" class="in" oninput="calc()"></div>
-            <div class="field"><label>Стор. C</label><input type="number" id="sc" class="in" oninput="calc()"></div>
-            <div class="field"><label>Стор. D</label><input type="number" id="sd" class="in" oninput="calc()"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div class="field"><label>Сторона A</label><input type="number" id="sa" class="in" placeholder="0" oninput="calc()"></div>
+            <div class="field"><label>Сторона B</label><input type="number" id="sb" class="in" placeholder="0" oninput="calc()"></div>
+            <div class="field"><label>Сторона C</label><input type="number" id="sc" class="in" placeholder="0" oninput="calc()"></div>
+            <div class="field"><label>Сторона D</label><input type="number" id="sd" class="in" placeholder="0" oninput="calc()"></div>
         </div>
-        <div class="field"><label>Діагональ (м)</label><input type="number" id="dg" class="in" oninput="calc()"></div>
+        <div class="field"><label>Діагональ (між AB і CD)</label><input type="number" id="dg" class="in" placeholder="0" oninput="calc()"></div>
     </div>
 
     <div id="p2" class="page">
-        <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" class="in" oninput="calc()"></div>
-        <div class="field"><label>Бажана площа (м²)</label><input type="number" id="am2" class="in" oninput="sync(0)"></div>
-        <div class="field"><label>Бажана площа (сотки)</label><input type="number" id="asot" class="in" oninput="sync(1)"></div>
-    </div>
-
-    <button class="btn-clear" onclick="clearAll()">Очистити все</button>
-
-    <div class="res-box">
-        <div id="res-std">
-            <div class="res-line"><span>Площа:</span><span><span id="om2" class="val">0.00</span> м²</span></div>
-            <div class="res-line"><span>У сотках:</span><span><span id="osot" class="val">0.00</span> сот.</span></div>
-            <div class="res-line"><span>Периметр:</span><span><span id="oper" class="val">0.00</span> м</span></div>
-        </div>
-        <div id="res-side" class="hidden">
-            <div class="res-line"><span>Шукана довжина:</span><span><span id="oside" class="val">0.00</span> м</span></div>
+        <div class="field"><label>Відома сторона (м)</label><input type="number" id="sk" class="in" placeholder="0" oninput="calc()"></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div class="field"><label>Площа (м²)</label><input type="number" id="am2" class="in" placeholder="0" oninput="sync(0)"></div>
+            <div class="field"><label>Площа (сотки)</label><input type="number" id="asot" class="in" placeholder="0" oninput="sync(1)"></div>
         </div>
     </div>
-</div>
 
-<script>
-    let mode = 0;
-
-    function setTab(idx) {
-        mode = idx;
-        for (let i = 0; i < 3; i++) {
-            document.getElementById('t' + i).className = (i === idx) ? 'tab active' : 'tab';
-            document.getElementById('p' + i).className = (i === idx) ? 'page active' : 'page';
-        }
-        document.getElementById('res-std').className = (idx === 2) ? 'hidden' : '';
-        document.getElementById('res-side').className = (idx === 2) ? '' : 'hidden';
-        calc();
-    }
-
-    function sync(type) {
-        let m2 = document.getElementById('am2'), sot = document.getElementById('asot');
-        if (type === 0) sot.value = (parseFloat(m2.value) / 100 || 0).toFixed(2);
-        else m2.value = (parseFloat(sot.value) * 100 || 0).toFixed(2);
-        calc();
-    }
-
-    function clearAll() {
-        document.querySelectorAll('.in').forEach(input => input.value = '');
-        calc();
-    }
-
-    function heron(a, b, c) {
-        if (a + b <= c || a + c <= b || b + c <= a) return 0;
-        let p = (a + b + c) / 2;
-        return Math.sqrt(p * (p - a) * (p - b) * (p - c));
-    }
-
-    function calc() {
-        let area = 0, perim = 0;
-
-        if (mode === 0) {
-            let l = parseFloat(document.getElementById('l0').value) || 0;
-            let w = parseFloat(document.getElementById('w0').value) || 0;
-            area = l * w;
-            perim = (l + w) * 2;
-        } 
-        else if (mode === 1) {
-            let a = parseFloat(document.getElementById('sa').value) || 0;
-            let b = parseFloat(document.getElementById('sb').value) || 0;
-            let c = parseFloat(document.getElementById('sc').value) || 0;
-            let d = parseFloat(document.getElementById('sd').value) || 0;
-            let dg = parseFloat(document.getElementById('dg').value) || 0;
-            area = heron(a, b, dg) + heron(c, d, dg);
-            perim = a + b + c + d;
-        } 
-        else if (mode === 2) {
-            let side = parseFloat(document.getElementById('sk').value) || 0;
-            let targetArea = parseFloat(document.getElementById('am2').value) || 0;
-            document.getElementById('oside').innerText = side > 0 ? (targetArea / side).toFixed(2) : "0.00";
-        }
-        
-        updateUI(area, perim);
-    }
-
-    function updateUI(a, p) {
-        document.getElementById('om2').innerText = a.toFixed(2);
-        document.getElementById('osot').innerText = (a / 100).toFixed(2);
-        document.getElementById('oper').innerText = p.toFixed(2);
-    }
-</script>
-</body>
-</html>
+    <button class="btn-clear" onclick="clearAll()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2
